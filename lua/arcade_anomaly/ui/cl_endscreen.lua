@@ -39,13 +39,13 @@ function AA.EndScreen:Draw()
     
     local t = self.AnimTime
     
-    -- Background fade in
-    local bgAlpha = math.min(t * 200, 220)
-    surface.SetDrawColor(5, 5, 8, bgAlpha)
+    -- Background fade in - LIGHTER for better contrast
+    local bgAlpha = math.min(t * 255, 245)
+    surface.SetDrawColor(15, 15, 22, bgAlpha)
     surface.DrawRect(0, 0, w, h)
     
-    -- Animated grid
-    surface.SetDrawColor(30, 30, 40, 80)
+    -- Animated grid - MORE VISIBLE
+    surface.SetDrawColor(60, 60, 80, 120)
     local gridSize = 50
     local gridOffset = (t * 20) % gridSize
     for x = -gridSize, w, gridSize do
@@ -55,10 +55,10 @@ function AA.EndScreen:Draw()
         surface.DrawLine(0, y + gridOffset, w, y + gridOffset)
     end
     
-    -- Vignette
-    surface.SetDrawColor(0, 0, 0, 150)
-    surface.DrawRect(0, 0, w, h * 0.2)
-    surface.DrawRect(0, h * 0.8, w, h * 0.2)
+    -- Vignette - STRONGER for text focus
+    surface.SetDrawColor(0, 0, 0, 200)
+    surface.DrawRect(0, 0, w, h * 0.25)
+    surface.DrawRect(0, h * 0.75, w, h * 0.25)
     
     local cx = w / 2
     local startY = h * 0.12
@@ -96,10 +96,25 @@ function AA.EndScreen:Draw()
             surface.DrawRect(sx - size/2, sy - size/2, size, size)
         end
     else
-        -- Defeat
+        -- Defeat - HIGH CONTRAST VERSION
         local titleText = "RUN COMPLETE"
-        draw.SimpleText(titleText, "AA_Title_Glow", cx, titleY, Color(200, 50, 50, 100 + math.sin(t * 4) * 30), TEXT_ALIGN_CENTER)
-        draw.SimpleText(titleText, "AA_Title", cx, titleY, Color(220, 60, 60, titleAlpha), TEXT_ALIGN_CENTER)
+        
+        -- Multiple shadow layers for depth
+        for i = 4, 1, -1 do
+            local offset = i * 3
+            draw.SimpleText(titleText, "AA_Title", cx + offset, titleY + offset, Color(0, 0, 0, 150), TEXT_ALIGN_CENTER)
+        end
+        
+        -- Outer glow pulse
+        local glow = math.abs(math.sin(t * 4)) * 80 + 100
+        draw.SimpleText(titleText, "AA_Title_Glow", cx, titleY, Color(255, 100, 100, glow), TEXT_ALIGN_CENTER)
+        draw.SimpleText(titleText, "AA_Title_Glow", cx, titleY, Color(255, 80, 80, glow * 0.6), TEXT_ALIGN_CENTER)
+        
+        -- Main title - BRIGHTER RED
+        draw.SimpleText(titleText, "AA_Title", cx, titleY, Color(255, 90, 90, titleAlpha), TEXT_ALIGN_CENTER)
+        
+        -- Inner highlight
+        draw.SimpleText(titleText, "AA_Title", cx, titleY - 2, Color(255, 150, 150, titleAlpha * 0.7), TEXT_ALIGN_CENTER)
     end
     
     -- Final score section
@@ -122,7 +137,7 @@ function AA.EndScreen:Draw()
         draw.SimpleText(scoreText, "AA_Huge", cx, scoreY + 50, color_white, TEXT_ALIGN_CENTER)
     end
     
-    -- Stats grid
+    -- Stats grid - HIGH CONTRAST
     local statsY = scoreY + 150
     local statsReveal = math.max(0, (t - 1) * 1.5)
     
@@ -143,26 +158,39 @@ function AA.EndScreen:Draw()
         local statAlpha = math.floor(statReveal * 255)
         
         if statReveal > 0 then
-            -- Box background
-            surface.SetDrawColor(20, 20, 25, statAlpha * 0.8)
+            -- Box background - LIGHTER
+            surface.SetDrawColor(35, 35, 45, statAlpha * 0.95)
             surface.DrawRect(x - 90, y - 10, 180, 70)
             
-            surface.SetDrawColor(200, 50, 50, statAlpha * 0.3)
-            surface.DrawOutlinedRect(x - 90, y - 10, 180, 70, 1)
+            -- Border - BRIGHTER
+            surface.SetDrawColor(255, 100, 100, statAlpha * 0.6)
+            surface.DrawOutlinedRect(x - 90, y - 10, 180, 70, 2)
             
-            draw.SimpleText(stat.label, "AA_Tiny", x, y, Color(150, 150, 150, statAlpha), TEXT_ALIGN_CENTER)
-            draw.SimpleText(stat.value, "AA_Medium", x, y + 25, Color(255, 255, 255, statAlpha), TEXT_ALIGN_CENTER)
+            -- Inner shadow for text pop
+            surface.SetDrawColor(0, 0, 0, statAlpha * 0.3)
+            surface.DrawRect(x - 88, y - 8, 176, 25)
+            
+            -- Label - BRIGHTER
+            draw.SimpleText(stat.label, "AA_Tiny", x, y, Color(200, 200, 200, statAlpha), TEXT_ALIGN_CENTER)
+            
+            -- Value with shadow for contrast
+            draw.SimpleText(stat.value, "AA_Medium", x + 2, y + 27, Color(0, 0, 0, statAlpha * 0.8), TEXT_ALIGN_CENTER)
+            draw.SimpleText(stat.value, "AA_Medium", x, y + 25, Color(255, 220, 220, statAlpha), TEXT_ALIGN_CENTER)
         end
     end
     
-    -- High score comparison
+    -- High score comparison - HIGH CONTRAST
     local bestY = statsY + 180
     local bestReveal = math.max(0, (t - 2) * 1.5)
     
     if bestReveal > 0 then
         local bestAlpha = math.floor(math.min(bestReveal, 1) * 255)
         local bestText = "PERSONAL BEST: " .. (AA.Util and AA.Util.FormatScore(data.highScore) or string.format("%09d", data.highScore))
-        draw.SimpleText(bestText, "AA_Small", cx, bestY, Color(180, 180, 180, bestAlpha), TEXT_ALIGN_CENTER)
+        
+        -- Shadow
+        draw.SimpleText(bestText, "AA_Small", cx + 2, bestY + 2, Color(0, 0, 0, bestAlpha * 0.8), TEXT_ALIGN_CENTER)
+        -- Text - BRIGHTER
+        draw.SimpleText(bestText, "AA_Small", cx, bestY, Color(220, 220, 220, bestAlpha), TEXT_ALIGN_CENTER)
     end
     
     -- Restart button
