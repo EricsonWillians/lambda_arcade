@@ -1,0 +1,11 @@
+{
+  "title": "Arcade Enemy Spawner",
+  "type": "gamemode",
+  "tags": ["fun", "realism"],
+  "ignore": [
+      "*.psd",
+      "*.xcf",
+      "node_modules/*",
+      "*.md"
+  ]
+}
