@@ -76,11 +76,15 @@ function UIManager.ApplyLevelUpBenefits(ply, level)
     local newArmor = (level - 1) * 2
     ply:SetArmor(math.min(100, newArmor))
     
-    -- Every 5 levels, give speed boost
-    if level % 5 == 0 then
-        local speedMultiplier = 1 + (math.floor(level / 5) * 0.1)
-        ply:SetWalkSpeed(200 * speedMultiplier)
-        ply:SetRunSpeed(400 * speedMultiplier)
+    -- Apply speed boost every level (cumulative bonus)
+    local speedMultiplier = 1 + (level * 0.04)
+    ply:SetWalkSpeed(250 * speedMultiplier)
+    ply:SetRunSpeed(450 * speedMultiplier)
+    
+    -- Cap max speed to prevent insanity
+    if ply:GetRunSpeed() > 700 then
+        ply:SetRunSpeed(700)
+        ply:SetWalkSpeed(400)
     end
 end
 
@@ -108,6 +112,26 @@ end
 -- Hook into player events
 hook.Add("PlayerInitialSpawn", "ArcadeSpawner_InitPlayer", function(ply)
     UIManager.InitializePlayer(ply)
+end)
+
+-- Set improved base speeds on player spawn
+hook.Add("PlayerSpawn", "ArcadeSpawner_SetSpeed", function(ply)
+    if not IsValid(ply) then return end
+    
+    -- Get player level for speed calculation
+    local data = UIManager.GetPlayerData(ply)
+    local level = data and data.level or 1
+    
+    -- Apply level-based speed boost
+    local speedMultiplier = 1 + (level * 0.04)
+    ply:SetWalkSpeed(250 * speedMultiplier)
+    ply:SetRunSpeed(450 * speedMultiplier)
+    
+    -- Cap max speed
+    if ply:GetRunSpeed() > 700 then
+        ply:SetRunSpeed(700)
+        ply:SetWalkSpeed(400)
+    end
 end)
 
 hook.Add("PlayerDisconnected", "ArcadeSpawner_CleanupPlayer", function(ply)
