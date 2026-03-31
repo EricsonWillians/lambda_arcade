@@ -88,6 +88,10 @@ local loadOrder = {
     
     -- FX (Server)
     {"fx/sv_fx_dispatch", "SERVER"},
+    {"fx/sv_gore", "SERVER"},
+    
+    -- Loot System
+    {"core/sv_loot", "SERVER"},
     
     -- Core Client
     {"core/cl_run_state", "CLIENT"},

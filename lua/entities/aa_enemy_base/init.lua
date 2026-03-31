@@ -758,31 +758,38 @@ function ENT:Die(attacker)
         end
     end
     
-    -- Drop loot
-    self:DropLoot()
+    -- ULTRA GORE DEATH EFFECTS
+    if AA and AA.Gore then
+        -- Different gore based on archetype and death type
+        local intensity = 1
+        if self.Archetype == 3 then intensity = 1.5 -- Brutes
+        elseif self.Archetype == 6 then intensity = 2 -- Elites
+        elseif self.IsElite then intensity = 1.8
+        end
+        
+        -- Death explosion with gibs and blood everywhere
+        AA.Gore:DeathExplosion(self:WorldSpaceCenter(), intensity, self.IsElite)
+    end
+    
+    -- Drop loot using enhanced system
+    if AA and AA.Loot then
+        AA.Loot:DropFromEnemy(self, attacker)
+    else
+        -- Fallback to old system
+        self:DropLoot()
+    end
     
     -- Score
     if AA and AA.ScoreManager then
         AA.ScoreManager:OnEnemyKilled(self, attacker)
     end
     
-    -- Use enhanced FX system if available
+    -- Legacy FX dispatch for client effects
     if AA and AA.FX and AA.FX.DispatchDeath then
         AA.FX.DispatchDeath(self:WorldSpaceCenter(), self.IsElite, attacker)
-    else
-        -- Fallback FX
-        for i = 1, 3 do
-            local offset = Vector(math.random(-20, 20), math.random(-20, 20), math.random(0, 40))
-            self:SpawnBloodEffect(self:WorldSpaceCenter() + offset)
-        end
-        
-        local effect = EffectData()
-        effect:SetOrigin(self:WorldSpaceCenter())
-        effect:SetScale(2)
-        util.Effect("cball_explode", effect)
     end
     
-    -- Create ragdoll
+    -- Create ragdoll with blood
     self:CreateRagdoll()
     
     -- Remove
@@ -807,20 +814,36 @@ function ENT:CreateRagdoll()
     
     rag:Activate()
     
-    -- Blood on ragdoll
-    for i = 1, 5 do
+    -- ULTRA BLOOD ON RAGDOLL
+    local bloodIntensity = self.IsElite and 8 or 5
+    for i = 1, bloodIntensity do
         local effect = EffectData()
-        effect:SetOrigin(rag:GetPos() + Vector(math.random(-30, 30), math.random(-30, 30), math.random(0, 60)))
-        effect:SetScale(1)
+        local offset = Vector(
+            math.random(-30, 30), 
+            math.random(-30, 30), 
+            math.random(10, 60)
+        )
+        effect:SetOrigin(rag:GetPos() + offset)
+        effect:SetScale(math.Rand(1, 2.5))
         util.Effect("BloodImpact", effect)
+        
+        -- Additional blood squirt for elites
+        if self.IsElite and i <= 3 then
+            local squirt = EffectData()
+            squirt:SetOrigin(rag:GetPos() + offset)
+            squirt:SetNormal(VectorRand())
+            squirt:SetScale(2)
+            util.Effect("bloodstream", squirt)
+        end
     end
     
-    -- Transfer velocity
+    -- Transfer velocity with more chaos
+    local velocityMult = self.IsElite and 2 or 1
     for i = 0, rag:GetPhysicsObjectCount() - 1 do
         local phys = rag:GetPhysicsObjectNum(i)
         if IsValid(phys) then
-            phys:SetVelocity(self:GetVelocity() + VectorRand() * 30)
-            phys:AddAngleVelocity(VectorRand() * 100)
+            phys:SetVelocity(self:GetVelocity() + VectorRand() * (50 * velocityMult))
+            phys:AddAngleVelocity(VectorRand() * (200 * velocityMult))
         end
     end
     
@@ -828,21 +851,63 @@ function ENT:CreateRagdoll()
     rag:SetMaterial(self:GetMaterial())
     rag:SetColor(self:GetColor())
     
-    -- Blood trail effect
-    timer.Create("BloodTrail_" .. rag:EntIndex(), 0.5, 10, function()
+    -- ENHANCED BLOOD TRAIL EFFECT
+    local trailCount = self.IsElite and 20 or 12
+    local trailInterval = self.IsElite and 0.3 or 0.5
+    timer.Create("BloodTrail_" .. rag:EntIndex(), trailInterval, trailCount, function()
         if IsValid(rag) then
-            local effect = EffectData()
-            effect:SetOrigin(rag:GetPos())
-            effect:SetScale(0.5)
-            util.Effect("BloodImpact", effect)
+            -- Multiple blood impacts for trail
+            for i = 1, (self.IsElite and 3 or 2) do
+                local effect = EffectData()
+                local trailOffset = Vector(
+                    math.random(-20, 20), 
+                    math.random(-20, 20), 
+                    math.random(5, 40)
+                )
+                effect:SetOrigin(rag:GetPos() + trailOffset)
+                effect:SetScale(math.Rand(0.8, 1.5))
+                util.Effect("BloodImpact", effect)
+            end
+            
+            -- Blood spray
+            if math.random() < 0.4 then
+                local spray = EffectData()
+                spray:SetOrigin(rag:GetPos() + Vector(0, 0, 20))
+                spray:SetNormal(VectorRand())
+                spray:SetScale(1.5)
+                util.Effect("bloodstream", spray)
+            end
+            
+            -- Blood pool underneath
+            local tr = util.TraceLine({
+                start = rag:GetPos() + Vector(0, 0, 10),
+                endpos = rag:GetPos() - Vector(0, 0, 50),
+                mask = MASK_SOLID
+            })
+            
+            if tr.Hit then
+                util.Decal("BloodLarge", tr.HitPos + tr.HitNormal, tr.HitPos - tr.HitNormal)
+            end
         end
     end)
     
-    -- Remove after delay
-    timer.Simple(15, function()
+    -- Remove after delay (longer for elites)
+    local removeDelay = self.IsElite and 25 or 15
+    timer.Simple(removeDelay, function()
         if IsValid(rag) then
             timer.Remove("BloodTrail_" .. rag:EntIndex())
-            rag:Remove()
+            
+            -- Fade out effect
+            local fadeAlpha = 255
+            timer.Create("RagFade_" .. rag:EntIndex(), 0.1, 20, function()
+                if IsValid(rag) then
+                    fadeAlpha = fadeAlpha - 12
+                    rag:SetColor(Color(255, 255, 255, math.max(0, fadeAlpha)))
+                    if fadeAlpha <= 0 then
+                        rag:Remove()
+                    end
+                end
+            end)
         end
     end)
 end
