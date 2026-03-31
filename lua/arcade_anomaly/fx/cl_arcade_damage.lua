@@ -323,12 +323,6 @@ hook.Add("Think", "AA_DamagePopup_Think", function()
 end)
 
 -- Draw hook
-hook.Add("PostDrawTranslucentRenderables", "AA_DamagePopup_Draw3D", function()
-    cam.Start3D2D(EyePos(), EyeAngles(), 1)
-        cam.End3D2D()
-    cam.End3D()
-end)
-
 hook.Add("HUDPaint", "AA_DamagePopup_Draw", function()
     local now = CurTime()
     
@@ -474,7 +468,7 @@ hook.Add("HUDPaint", "AA_DamagePopup_Draw", function()
     end
 end)
 
--- Network receiver
+-- Network receiver for our arcade damage system
 net.Receive("AA_DamagePopup", function()
     local pos = net.ReadVector()
     local damage = net.ReadUInt(16)
@@ -486,12 +480,14 @@ net.Receive("AA_DamagePopup", function()
     DP.Create(pos, damage, isKill, isCrit, DP.ComboCount)
 end)
 
--- Alternative: Hook into existing damage number network
-hook.Add("ArcadeSpawner_DamageNumber", "AA_ArcadeDamage_Override", function(pos, damage, isKill)
-    -- Override the old system with arcade style
+-- Also hook into the old ArcadeSpawner damage number system
+net.Receive("ArcadeSpawner_DamageNumber", function()
+    local pos = net.ReadVector()
+    local damage = net.ReadInt(16)
+    local isKill = net.ReadBool()
+    
     local isCrit = damage > 50
     DP.Create(pos, damage, isKill, isCrit, DP.ComboCount)
-    return true  -- Block old system
 end)
 
 print("[Arcade Anomaly]  Damage popup system loaded!")

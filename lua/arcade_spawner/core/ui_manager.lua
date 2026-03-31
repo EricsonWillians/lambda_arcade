@@ -152,7 +152,8 @@ end)
 
 -- Hook into damage events for damage numbers
 hook.Add("EntityTakeDamage", "ArcadeSpawner_DamageNumbers", function(target, dmginfo)
-    if IsValid(target) and target.IsArcadeEnemy then
+    -- Check if target is an Arcade Anomaly enemy (has Archetype property)
+    if IsValid(target) and target.Archetype then
         local damage = math.floor(dmginfo:GetDamage())
         local isKill = (target:Health() - damage) <= 0
         

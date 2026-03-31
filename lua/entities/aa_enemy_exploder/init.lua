@@ -53,15 +53,18 @@ function ENT:Explode()
     -- Damage
     for _, victim in ipairs(ents.FindInSphere(pos, radius)) do
         if IsValid(victim) and (victim:IsPlayer() or victim.Archetype) and victim ~= self then
-            local dist = victim:GetPos():DistTo(pos)
-            local falloff = 1 - math.min(dist / radius, 1)
-            
-            local dmg = DamageInfo()
-            dmg:SetDamage(70 * falloff)
-            dmg:SetDamageType(DMG_BLAST)
-            dmg:SetAttacker(self)
-            dmg:SetInflictor(self)
-            victim:TakeDamageInfo(dmg)
+            local victimPos = victim:GetPos()
+            if victimPos then
+                local dist = victimPos:Distance(pos)
+                local falloff = 1 - math.min(dist / radius, 1)
+                
+                local dmg = DamageInfo()
+                dmg:SetDamage(70 * falloff)
+                dmg:SetDamageType(DMG_BLAST)
+                dmg:SetAttacker(self)
+                dmg:SetInflictor(self)
+                victim:TakeDamageInfo(dmg)
+            end
         end
     end
     

@@ -23,18 +23,19 @@ AA.Gore.BloodDecals = {
     "BloodSmall",
 }
 
--- Gib models (HL2 meat chunks)
+-- Gib models (Vanilla HL2 only - these actually exist)
 AA.Gore.GibModels = {
     "models/gibs/hgibs.mdl",
     "models/gibs/hgibs_scapula.mdl",
     "models/gibs/hgibs_spine.mdl",
     "models/gibs/hgibs_rib.mdl",
-    "models/gibs/hgibs_jaw.mdl",
-    "models/gibs/pgib_p1.mdl",
-    "models/gibs/pgib_p2.mdl",
-    "models/gibs/pgib_p3.mdl",
-    "models/gibs/pgib_p4.mdl",
-    "models/gibs/pgib_p5.mdl",
+    -- Using generic debris as fallback for missing models
+    "models/props_debris/concrete_chunk01a.mdl",
+    "models/props_debris/concrete_chunk02a.mdl",
+    "models/props_debris/concrete_chunk03a.mdl",
+    "models/props_debris/concrete_chunk04a.mdl",
+    "models/props_debris/concrete_chunk05a.mdl",
+    "models/props_debris/concrete_chunk06a.mdl",
 }
 
 -- Enhanced blood spray on damage
@@ -125,7 +126,9 @@ function AA.Gore:SpawnGibs(pos, count, velocity)
             local phys = gib:GetPhysicsObject()
             if IsValid(phys) then
                 phys:SetVelocity(vel)
-                phys:SetAngularVelocity(VectorRand() * math.random(200, 800))
+                -- Add angular velocity safely
+                local angVel = VectorRand() * math.random(200, 800)
+                phys:AddAngleVelocity(angVel)
                 phys:SetMaterial("flesh")
             end
             
@@ -208,13 +211,13 @@ function AA.Gore:DeathExplosion(pos, intensity, isElite)
         util.Effect("BloodImpact", effect)
     end
     
-    -- Blood spray upward
+    -- Blood spray upward (using vanilla HL2 effect)
     for i = 1, 10 * intensity do
         local eff = EffectData()
         eff:SetOrigin(pos)
         eff:SetNormal(Vector(0,0,1) + VectorRand() * 0.3)
         eff:SetScale(math.random(2, 5))
-        util.Effect("HL2BloodSpray", eff)
+        util.Effect("bloodspray", eff)
     end
     
     -- Massive blood pool
