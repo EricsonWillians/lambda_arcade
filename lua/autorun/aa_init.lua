@@ -101,8 +101,8 @@ local loadOrder = {
     
     -- FX (Client)
     {"fx/cl_fx", "CLIENT"},
-
     {"fx/cl_hit_feedback", "CLIENT"},
+    {"fx/cl_arcade_damage", "CLIENT"},  -- Capcom/JRPG style damage numbers
     
     -- UI (Client)
     {"ui/cl_fonts", "CLIENT"},

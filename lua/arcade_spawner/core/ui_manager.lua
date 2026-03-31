@@ -10,6 +10,7 @@ UIManager.PlayerData = {}
 util.AddNetworkString("ArcadeSpawner_PlayerXP")
 util.AddNetworkString("ArcadeSpawner_LevelUp")
 util.AddNetworkString("ArcadeSpawner_DamageNumber")
+util.AddNetworkString("AA_DamagePopup")  -- Arcade style damage numbers
 
 -- Initialize player data
 function UIManager.InitializePlayer(ply)
@@ -88,12 +89,18 @@ function UIManager.ApplyLevelUpBenefits(ply, level)
     end
 end
 
--- Show damage number
+-- Show damage number (arcade style)
 function UIManager.ShowDamageNumber(pos, damage, isKill)
-    net.Start("ArcadeSpawner_DamageNumber")
+    -- Send arcade-style damage popup
+    net.Start("AA_DamagePopup")
     net.WriteVector(pos)
-    net.WriteInt(damage, 16)
-    net.WriteBool(isKill or false)
+    net.WriteUInt(damage, 16)
+    
+    local flags = 0
+    if isKill then flags = bit.bor(flags, 1) end
+    if damage > 50 then flags = bit.bor(flags, 2) end  -- Critical hit
+    net.WriteUInt(flags, 8)
+    
     net.Broadcast()
 end
 
