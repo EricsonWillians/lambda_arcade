@@ -86,12 +86,12 @@ function AA.FX.Client:SpawnElite(pos)
         util.Effect("cball_bounce", eff)
     end
     
-    -- Smoke
+    -- Energy particles (replaced smoke with non-persistent effect)
     for i = 1, 5 do
-        local smokePos = pos + Vector(math.random(-30, 30), math.random(-30, 30), math.random(0, 50))
         local eff = EffectData()
-        eff:SetOrigin(smokePos)
-        util.Effect("Smoke", eff)
+        eff:SetOrigin(pos + Vector(math.random(-30, 30), math.random(-30, 30), math.random(0, 50)))
+        eff:SetScale(1)
+        util.Effect("cball_bounce", eff)
     end
 end
 
@@ -150,7 +150,7 @@ function AA.FX.Client:DeathElite(pos, data)
         eff:SetOrigin(pos + offset)
         eff:SetNormal(offset:GetNormalized())
         eff:SetScale(math.random(2, 4))
-        util.Effect("HL2BloodSpray", eff)
+        util.Effect("bloodspray", eff)
     end
     
     -- Fire particles
@@ -300,7 +300,7 @@ function AA.FX.Client:GibExplosion(pos, data)
         eff:SetOrigin(pos)
         eff:SetNormal(Vector(math.cos(angle), math.sin(angle), math.random(0.5, 1)))
         eff:SetScale(5)
-        util.Effect("HL2BloodSpray", eff)
+        util.Effect("bloodspray", eff)
     end
     
     -- Dynamic light
@@ -316,13 +316,12 @@ function AA.FX.Client:GibExplosion(pos, data)
         dlight.DieTime = CurTime() + 1.0
     end
     
-    -- Smoke
+    -- Explosion sparks (replaced smoke)
     for i = 1, 10 do
-        local smokePos = pos + VectorRand() * 50 + Vector(0, 0, 30)
         local eff = EffectData()
-        eff:SetOrigin(smokePos)
+        eff:SetOrigin(pos + VectorRand() * 50 + Vector(0, 0, 30))
         eff:SetScale(2)
-        util.Effect("Smoke", eff)
+        util.Effect("cball_explode", eff)
     end
 end
 

@@ -1,243 +1,323 @@
 --[[
-    Arcade Anomaly: Capcom/JRPG Style Gothic Damage Numbers
+    Arcade Anomaly: ULTRA Japanese Arcade Style Damage System
     
-    Japanese arcade style hit points with goth/bloody aesthetic.
-    Features dynamic scaling, bouncing animations, blood splatters, and combo multipliers.
+    Severely improved Capcom/JRPG style hit feedback with:
+    - Real Japanese kanji/katakana expressions
+    - Dynamic sizing and violent animations
+    - Blood splatter effects
+    - Combo system with milestone announcements
+    - Gothic bloody aesthetic
 --]]
 
 AA.DamagePopup = AA.DamagePopup or {}
 local DP = AA.DamagePopup
 
--- Active popups
+-- Active popups storage
 DP.Active = {}
+DP.ComboPopups = {}
+DP.BloodParticles = {}
 DP.ComboCount = 0
-DP.ComboTimer = 0
 DP.LastHitTime = 0
-DP.ComboMultiplier = 1
 
--- Gothic color palette
+-- GOTHIC BLOODY COLOR PALETTE
 DP.Colors = {
-    Normal = Color(220, 220, 220),      -- White-ish gray
-    Critical = Color(200, 50, 50),       -- Blood red
-    Kill = Color(255, 60, 60),           -- Bright blood red
-    Combo = Color(180, 80, 200),         -- Purple
-    MegaCombo = Color(255, 200, 50),     -- Gold
-    Shadow = Color(20, 5, 5),            -- Dark blood shadow
-    Blood = Color(139, 0, 0),            -- Dark red
+    Normal      = Color(240, 240, 240),     -- Bone white
+    LightHit    = Color(200, 200, 220),     -- Light gray
+    MediumHit   = Color(255, 150, 150),     -- Pink
+    HeavyHit    = Color(255, 80, 80),       -- Light red
+    Critical    = Color(255, 30, 30),       -- Blood red
+    Kill        = Color(255, 0, 0),         -- Pure red
+    Lethal      = Color(180, 0, 0),         -- Dark blood
+    Combo       = Color(200, 100, 255),     -- Purple
+    MegaCombo   = Color(255, 215, 0),       -- Gold
+    UltraCombo  = Color(0, 255, 255),       -- Cyan
+    Shadow      = Color(30, 0, 0),          -- Dark blood shadow
+    Blood       = Color(139, 0, 0),         -- Dark red
 }
 
--- Japanese text for arcade feel
-DP.JPText = {
-    Damage = "",
-    Kill = "",
-    Critical = "",
-    Combo = "",
-    Mega = ""
+-- JAPANESE ARCADE EXPRESSIONS
+DP.JP = {
+    -- Damage suffixes (small to large)
+    DamageSmall   = "",         -- Small hit
+    DamageMedium  = "",         -- Medium hit  
+    DamageLarge   = "",         -- Large hit
+    DamageHuge    = "",         -- Huge hit
+    
+    -- Hit types
+    Hit       = "HIT",          -- Generic hit
+    Smash     = "",             -- Heavy strike
+    Crash     = "",             -- Impact
+    Slash     = "",             -- Cut
+    
+    -- Critical/Status
+    Critical  = "CRITICAL",     -- Critical hit
+    Fatal     = "",             -- Fatal
+    Destroy   = "",             -- Destroy
+    
+    -- Kill confirmations
+    Kill      = "KILL",         -- Basic kill
+    Slain     = "",             -- Slain
+    Obliterate = "",            -- Obliterated
+    Annihilate = "",            -- Annihilated
+    
+    -- Combo milestones
+    Combo3    = "NICE!",
+    Combo5    = "GOOD!",
+    Combo10   = "GREAT!",
+    Combo15   = "AWESOME!",
+    Combo20   = "EXCELLENT!",
+    Combo25   = "FANTASTIC!",
+    Combo30   = "UNBELIEVABLE!",
+    Combo50   = "GODLIKE!",
+    Combo100  = "LEGENDARY!",
 }
 
--- Initialize fonts
+-- INITIALIZE FONTS WITH JAPANESE SUPPORT
 hook.Add("Initialize", "AA_DamagePopup_InitFonts", function()
-    -- Gothic damage number fonts
-    surface.CreateFont("AA_Damage_Gothic", {
-        font = "Consolas",  -- Monospace for JRPG feel
-        size = 48,
-        weight = 900,
+    -- Main damage number font - uses Arial Unicode for Japanese
+    surface.CreateFont("AA_JP_Damage", {
+        font = "Arial",
+        size = 42,
+        weight = 800,
         antialias = true,
         outline = false,
-        shadow = false
     })
     
-    surface.CreateFont("AA_Damage_Gothic_Shadow", {
-        font = "Consolas",
-        size = 48,
-        weight = 900,
+    -- Shadow/blur font
+    surface.CreateFont("AA_JP_Damage_Blur", {
+        font = "Arial",
+        size = 42,
+        weight = 800,
         antialias = true,
-        outline = false,
-        blursize = 8
+        blursize = 6,
     })
     
-    surface.CreateFont("AA_Damage_Critical", {
-        font = "Trebuchet MS",
-        size = 64,
-        weight = 1000,
-        antialias = true,
-        italic = true
-    })
-    
-    surface.CreateFont("AA_Damage_Combo", {
+    -- Critical hit font - larger, more dramatic
+    surface.CreateFont("AA_JP_Critical", {
         font = "Arial Black",
-        size = 36,
+        size = 56,
         weight = 900,
         antialias = true,
-        outline = true
+        italic = true,
     })
     
-    surface.CreateFont("AA_Damage_Kill", {
+    -- Kill confirm font
+    surface.CreateFont("AA_JP_Kill", {
         font = "Impact",
-        size = 72,
+        size = 64,
         weight = 900,
         antialias = true,
-        outline = false
+    })
+    
+    -- Japanese text font
+    surface.CreateFont("AA_JP_Text", {
+        font = "MS Gothic",  -- Japanese font
+        size = 28,
+        weight = 700,
+        antialias = true,
+        outline = true,
+    })
+    
+    -- Combo milestone font
+    surface.CreateFont("AA_JP_Combo", {
+        font = "Arial Black",
+        size = 48,
+        weight = 900,
+        antialias = true,
     })
 end)
 
--- Create a damage popup
-function DP.Create(pos, damage, isKill, isCrit, comboCount)
+-- Get the appropriate expression based on damage and context
+function DP:GetExpression(damage, isKill, isCrit, combo)
+    if isKill then
+        if combo >= 20 then return DP.JP.Annihilate
+        elseif combo >= 10 then return DP.JP.Obliterate
+        elseif combo >= 5 then return DP.JP.Slain
+        else return DP.JP.Kill end
+    end
+    
+    if isCrit then
+        return DP.JP.Critical
+    end
+    
+    if damage >= 100 then return DP.JP.Smash
+    elseif damage >= 50 then return DP.JP.Crash
+    elseif damage >= 25 then return DP.JP.Hit
+    else return "" end
+end
+
+-- Get the damage suffix
+function DP:GetDamageSuffix(damage)
+    if damage >= 200 then return DP.JP.DamageHuge
+    elseif damage >= 100 then return DP.JP.DamageLarge
+    elseif damage >= 50 then return DP.JP.DamageMedium
+    else return DP.JP.DamageSmall end
+end
+
+-- Get color based on damage severity
+function DP:GetDamageColor(damage, isKill, isCrit, combo)
+    if isKill then
+        if combo >= 15 then return DP.Colors.UltraCombo
+        elseif combo >= 10 then return DP.Colors.MegaCombo
+        else return DP.Colors.Kill end
+    end
+    
+    if isCrit then return DP.Colors.Critical end
+    if damage >= 100 then return DP.Colors.HeavyHit
+    elseif damage >= 50 then return DP.Colors.MediumHit
+    elseif damage >= 25 then return DP.Colors.LightHit
+    else return DP.Colors.Normal end
+end
+
+-- Get combo milestone expression
+function DP:GetComboExpression(combo)
+    if combo >= 100 then return DP.JP.Combo100
+    elseif combo >= 50 then return DP.JP.Combo50
+    elseif combo >= 30 then return DP.JP.Combo30
+    elseif combo >= 25 then return DP.JP.Combo25
+    elseif combo >= 20 then return DP.JP.Combo20
+    elseif combo >= 15 then return DP.JP.Combo15
+    elseif combo >= 10 then return DP.JP.Combo10
+    elseif combo >= 5 then return DP.JP.Combo5
+    elseif combo >= 3 then return DP.JP.Combo3
+    else return nil end
+end
+
+-- CREATE A DAMAGE POPUP
+function DP.Create(pos, damage, isKill, isCrit)
     local now = CurTime()
     
-    -- Update combo system
-    if now - DP.LastHitTime < 2.0 then
+    -- Update combo counter
+    if now - DP.LastHitTime < 2.5 then
         DP.ComboCount = DP.ComboCount + 1
-        DP.ComboMultiplier = math.min(1 + (DP.ComboCount * 0.1), 3.0)
     else
         DP.ComboCount = 1
-        DP.ComboMultiplier = 1
     end
     DP.LastHitTime = now
     
-    -- Calculate popup properties
+    local combo = DP.ComboCount
+    
+    -- Calculate scale based on damage and context
+    local baseScale = 0.7
+    if isKill then baseScale = 1.4
+    elseif isCrit then baseScale = 1.2
+    elseif damage >= 100 then baseScale = 1.1
+    elseif damage >= 50 then baseScale = 0.9
+    end
+    
+    -- Combo scaling
+    baseScale = baseScale * (1 + math.min(combo * 0.02, 0.5))
+    
+    -- Create the popup
     local popup = {
-        pos = pos + VectorRand() * 10,  -- Slight random offset
-        basePos = pos,
+        pos = pos + Vector(0, 0, 50) + VectorRand() * 15,
         damage = damage,
         isKill = isKill,
         isCrit = isCrit,
-        combo = DP.ComboCount,
-        multiplier = DP.ComboMultiplier,
+        combo = combo,
         
-        -- Animation properties
-        startTime = now,
-        lifeTime = isKill and 2.0 or (isCrit and 1.5 or 1.0),
+        -- Visuals
         scale = 0,
-        targetScale = DP:GetScale(damage, isKill, isCrit),
+        targetScale = math.min(baseScale, 2.0),
+        color = DP:GetDamageColor(damage, isKill, isCrit, combo),
+        expression = DP:GetExpression(damage, isKill, isCrit, combo),
+        suffix = DP:GetDamageSuffix(damage),
+        
+        -- Animation
+        startTime = now,
+        lifeTime = isKill and 2.0 or 1.2,
+        alpha = 255,
         
         -- Physics
-        velocity = Vector(
-            math.random(-30, 30),
-            math.random(-30, 30),
-            math.random(60, 120)
+        vel = Vector(
+            math.random(-40, 40),
+            math.random(-40, 40),
+            math.random(80, 150)
         ),
-        rotation = math.random(-15, 15),
-        rotVelocity = math.random(-30, 30),
+        rotation = math.random(-20, 20),
+        rotVel = math.random(-40, 40),
         
-        -- Visual state
-        alpha = 255,
-        shake = 0,
+        -- Effects
         bounce = 0,
-        bloodSplatter = isKill or (damage > 50),
-        
-        -- Color
-        color = DP:GetColor(damage, isKill, isCrit, DP.ComboCount),
-        glowIntensity = isCrit and 1 or 0.5,
+        shake = 0,
+        pulse = 0,
     }
     
     table.insert(DP.Active, popup)
     
-    -- Create blood splatter effect for big hits
-    if popup.bloodSplatter then
-        DP:CreateBloodSplatter(pos, damage)
+    -- Create blood splatter for big hits
+    if damage >= 50 or isKill then
+        DP:CreateBloodSplatter(pos, damage, isKill)
     end
     
-    -- Create combo popup for milestones
-    if DP.ComboCount > 0 and DP.ComboCount % 5 == 0 then
-        DP:CreateComboPopup(pos, DP.ComboCount)
-    end
-end
-
--- Get scale based on damage and hit type
-function DP:GetScale(damage, isKill, isCrit)
-    local base = 0.8
-    
-    if isKill then
-        base = 1.5
-    elseif isCrit then
-        base = 1.3
-    elseif damage > 100 then
-        base = 1.2
-    elseif damage > 50 then
-        base = 1.0
-    end
-    
-    -- Cap scale
-    return math.min(base, 2.0)
-end
-
--- Get color based on hit type
-function DP:GetColor(damage, isKill, isCrit, combo)
-    if isKill then
-        return DP.Colors.Kill
-    elseif isCrit then
-        return DP.Colors.Critical
-    elseif combo >= 10 then
-        return DP.Colors.MegaCombo
-    elseif combo >= 5 then
-        return DP.Colors.Combo
-    elseif damage > 50 then
-        return Color(255, 150, 150)
-    else
-        return DP.Colors.Normal
+    -- Create combo milestone popup
+    local comboExpr = DP:GetComboExpression(combo)
+    if comboExpr and combo % 5 == 0 then
+        DP:CreateComboPopup(pos, combo, comboExpr)
     end
 end
 
 -- Create blood splatter particles
-function DP:CreateBloodSplatter(pos, damage)
-    local intensity = math.min(damage / 50, 3)
+function DP:CreateBloodSplatter(pos, damage, isKill)
+    local count = isKill and 15 or math.floor(damage / 10)
+    count = math.min(count, 20)
     
-    -- Create clientside blood particles
-    for i = 1, math.floor(intensity * 5) do
-        local dir = VectorRand()
-        dir.z = math.abs(dir.z) + 0.3
-        dir:Normalize()
-        
-        local speed = math.random(100, 300)
-        local particle = {
-            pos = pos,
-            vel = dir * speed,
-            life = math.random(0.3, 0.8),
+    for i = 1, count do
+        local angle = math.random() * math.pi * 2
+        local speed = math.random(50, 200)
+        local p = {
+            pos = pos + Vector(0, 0, 30),
+            vel = Vector(
+                math.cos(angle) * speed,
+                math.sin(angle) * speed,
+                math.random(50, 150)
+            ),
+            life = math.random(0.4, 0.8),
             start = CurTime(),
             size = math.random(3, 8),
             color = Color(
-                math.random(150, 200),
-                math.random(10, 30),
-                math.random(10, 30),
+                math.random(180, 220),
+                math.random(0, 30),
+                math.random(0, 30),
                 255
             )
         }
-        
-        if not self.BloodParticles then self.BloodParticles = {} end
-        table.insert(self.BloodParticles, particle)
+        table.insert(self.BloodParticles, p)
     end
 end
 
 -- Create combo milestone popup
-function DP:CreateComboPopup(pos, combo)
+function DP:CreateComboPopup(pos, combo, text)
     local popup = {
-        pos = pos + Vector(0, 0, 50),
-        text = combo .. " " .. self.JPText.Combo,
-        isCombo = true,
+        pos = pos + Vector(0, 0, 80),
+        text = text,
+        combo = combo,
         startTime = CurTime(),
-        lifeTime = 1.5,
+        lifeTime = 1.8,
         scale = 0,
-        targetScale = 1.2,
-        velocity = Vector(0, 0, 80),
+        targetScale = 1.0 + math.min(combo * 0.02, 0.8),
         alpha = 255,
-        color = combo >= 10 and self.Colors.MegaCombo or self.Colors.Combo,
+        vel = Vector(0, 0, 60),
     }
     
-    if not self.ComboPopups then self.ComboPopups = {} end
+    -- Color based on combo level
+    if combo >= 50 then popup.color = DP.Colors.UltraCombo
+    elseif combo >= 25 then popup.color = DP.Colors.MegaCombo
+    elseif combo >= 10 then popup.color = DP.Colors.Combo
+    else popup.color = DP.Colors.Normal end
+    
     table.insert(self.ComboPopups, popup)
 end
 
--- Think hook for updating popups
+-- UPDATE LOOP
 hook.Add("Think", "AA_DamagePopup_Think", function()
     local ft = FrameTime()
     local now = CurTime()
     
     -- Reset combo if expired
-    if now - DP.LastHitTime > 2.5 then
+    if now - DP.LastHitTime > 3.0 then
         if DP.ComboCount > 0 then
             DP.ComboCount = 0
-            DP.ComboMultiplier = 1
         end
     end
     
@@ -250,27 +330,27 @@ hook.Add("Think", "AA_DamagePopup_Think", function()
         if progress >= 1 then
             table.remove(DP.Active, i)
         else
-            -- Scale animation (pop in then settle)
-            if age < 0.1 then
-                p.scale = p.targetScale * (age / 0.1)
-            elseif age < 0.2 then
-                p.scale = p.targetScale * (1 + (0.2 - age) * 2)
+            -- Pop-in animation
+            if age < 0.08 then
+                p.scale = p.targetScale * (age / 0.08)
+            elseif age < 0.15 then
+                p.scale = p.targetScale * (1.15 - (age - 0.08) / 0.07 * 0.15)
             else
-                p.scale = p.targetScale * (1 - progress * 0.2)
+                p.scale = p.targetScale * (1 - progress * 0.15)
             end
             
-            -- Bounce animation
-            p.bounce = math.abs(math.sin(age * 8)) * math.max(0, 1 - progress * 2) * 10
+            -- Bounce effect
+            p.bounce = math.abs(math.sin(age * 10)) * math.max(0, 1 - progress * 1.5) * 8
             
-            -- Shake for criticals
-            if p.isCrit then
-                p.shake = math.sin(age * 30) * math.max(0, 1 - progress * 2) * 5
+            -- Shake for criticals/kills
+            if p.isCrit or p.isKill then
+                p.shake = math.sin(age * 25) * math.max(0, 1 - progress) * 4
             end
             
             -- Movement
-            p.pos = p.pos + p.velocity * ft
-            p.velocity.z = p.velocity.z - 100 * ft  -- Gravity
-            p.rotation = p.rotation + p.rotVelocity * ft
+            p.pos = p.pos + p.vel * ft
+            p.vel.z = p.vel.z - 120 * ft
+            p.rotation = p.rotation + p.rotVel * ft
             
             -- Fade out
             if progress > 0.7 then
@@ -280,49 +360,41 @@ hook.Add("Think", "AA_DamagePopup_Think", function()
     end
     
     -- Update combo popups
-    if DP.ComboPopups then
-        for i = #DP.ComboPopups, 1, -1 do
-            local p = DP.ComboPopups[i]
-            local age = now - p.startTime
-            local progress = age / p.lifeTime
-            
-            if progress >= 1 then
-                table.remove(DP.ComboPopups, i)
+    for i = #DP.ComboPopups, 1, -1 do
+        local p = DP.ComboPopups[i]
+        local age = now - p.startTime
+        local progress = age / p.lifeTime
+        
+        if progress >= 1 then
+            table.remove(DP.ComboPopups, i)
+        else
+            if age < 0.1 then
+                p.scale = p.targetScale * (age / 0.1)
             else
-                -- Pop in
-                if age < 0.15 then
-                    p.scale = p.targetScale * math.sin(age / 0.15 * math.pi * 0.5)
-                else
-                    p.scale = p.targetScale * (1 + math.sin(age * 5) * 0.1)
-                end
-                
-                p.pos = p.pos + p.velocity * ft
-                p.alpha = 255 * (1 - progress)
+                p.scale = p.targetScale * (1 + math.sin(age * 6) * 0.08)
             end
+            
+            p.pos = p.pos + p.vel * ft
+            p.alpha = 255 * (1 - progress)
         end
     end
     
     -- Update blood particles
-    if DP.BloodParticles then
-        for i = #DP.BloodParticles, 1, -1 do
-            local p = DP.BloodParticles[i]
-            local age = now - p.start
-            
-            if age > p.life then
-                table.remove(DP.BloodParticles, i)
-            else
-                p.pos = p.pos + p.vel * ft
-                p.vel.z = p.vel.z - 500 * ft  -- Heavy gravity
-                
-                -- Fade
-                local progress = age / p.life
-                p.color.a = 255 * (1 - progress)
-            end
+    for i = #DP.BloodParticles, 1, -1 do
+        local p = DP.BloodParticles[i]
+        local age = now - p.start
+        
+        if age > p.life then
+            table.remove(DP.BloodParticles, i)
+        else
+            p.pos = p.pos + p.vel * ft
+            p.vel.z = p.vel.z - 400 * ft
+            p.color.a = 255 * (1 - age / p.life)
         end
     end
 end)
 
--- Draw hook
+-- DRAW LOOP
 hook.Add("HUDPaint", "AA_DamagePopup_Draw", function()
     local now = CurTime()
     
@@ -330,49 +402,49 @@ hook.Add("HUDPaint", "AA_DamagePopup_Draw", function()
     for _, p in ipairs(DP.Active) do
         local screen = p.pos:ToScreen()
         if screen.visible then
-            local x = screen.x + math.sin(now * 20) * p.shake
-            local y = screen.y + math.cos(now * 15) * p.shake - p.bounce
+            local x = screen.x + math.sin(now * 30) * p.shake + p.rotation * 0.1
+            local y = screen.y - p.bounce
             local scale = p.scale
             local alpha = p.alpha
             local color = Color(p.color.r, p.color.g, p.color.b, alpha)
             
-            -- Draw multiple shadow layers for depth (gothic look)
-            for i = 4, 1, -1 do
-                local offset = i * 2 * scale
+            -- GOTHIC SHADOW LAYERS (for depth)
+            for i = 5, 1, -1 do
+                local offset = i * 2.5 * scale
                 draw.SimpleText(
                     p.damage,
-                    p.isCrit and "AA_Damage_Critical" or "AA_Damage_Gothic_Shadow",
+                    p.isCrit and "AA_JP_Critical" or "AA_JP_Damage_Blur",
                     x + offset,
                     y + offset,
-                    Color(20, 0, 0, alpha * 0.6),
+                    Color(20, 0, 0, alpha * 0.5),
                     TEXT_ALIGN_CENTER,
                     TEXT_ALIGN_CENTER
                 )
             end
             
-            -- Outer glow for crits
-            if p.isCrit then
-                for i = 1, 3 do
-                    local glowAlpha = alpha * (0.3 - i * 0.08)
+            -- OUTER GLOW for crits/kills
+            if p.isCrit or p.isKill then
+                for i = 1, 4 do
+                    local glowAlpha = alpha * (0.25 - i * 0.05)
                     draw.SimpleText(
                         p.damage,
-                        "AA_Damage_Critical",
+                        p.isKill and "AA_JP_Kill" or "AA_JP_Critical",
                         x,
                         y,
-                        Color(255, 100, 100, glowAlpha),
+                        Color(255, 50, 50, glowAlpha),
                         TEXT_ALIGN_CENTER,
                         TEXT_ALIGN_CENTER
                     )
                 end
             end
             
-            -- Main number
-            local font = p.isKill and "AA_Damage_Kill" or 
-                         (p.isCrit and "AA_Damage_Critical" or "AA_Damage_Gothic")
+            -- MAIN DAMAGE NUMBER
+            local mainFont = p.isKill and "AA_JP_Kill" or 
+                            (p.isCrit and "AA_JP_Critical" or "AA_JP_Damage")
             
             draw.SimpleText(
                 p.damage,
-                font,
+                mainFont,
                 x,
                 y,
                 color,
@@ -380,31 +452,70 @@ hook.Add("HUDPaint", "AA_DamagePopup_Draw", function()
                 TEXT_ALIGN_CENTER
             )
             
-            -- Japanese suffix
-            local suffix = p.isKill and DP.JPText.Kill or DP.JPText.Damage
-            local suffixColor = Color(255, 255, 255, alpha * 0.9)
+            -- JAPANESE SUFFIX
+            if p.suffix and p.suffix ~= "" then
+                draw.SimpleText(
+                    p.suffix,
+                    "AA_JP_Text",
+                    x + (p.isCrit and 50 or 35) * scale,
+                    y + 8 * scale,
+                    Color(255, 255, 255, alpha * 0.9),
+                    TEXT_ALIGN_LEFT,
+                    TEXT_ALIGN_CENTER
+                )
+            end
             
-            draw.SimpleText(
-                suffix,
-                "AA_Damage_Combo",
-                x + (p.isCrit and 40 or 30) * scale,
-                y + 5 * scale,
-                suffixColor,
-                TEXT_ALIGN_LEFT,
-                TEXT_ALIGN_CENTER
-            )
+            -- EXPRESSION TEXT (Critical, Kill, etc)
+            if p.expression and p.expression ~= "" then
+                local exprY = y - 45 * scale
+                local exprColor = p.isKill and Color(255, 200, 50, alpha) or Color(255, 100, 100, alpha)
+                
+                -- Shadow
+                draw.SimpleText(
+                    p.expression,
+                    "AA_JP_Text",
+                    x + 2,
+                    exprY + 2,
+                    Color(0, 0, 0, alpha * 0.7),
+                    TEXT_ALIGN_CENTER,
+                    TEXT_ALIGN_CENTER
+                )
+                
+                -- Main expression
+                draw.SimpleText(
+                    p.expression,
+                    "AA_JP_Text",
+                    x,
+                    exprY,
+                    exprColor,
+                    TEXT_ALIGN_CENTER,
+                    TEXT_ALIGN_CENTER
+                )
+            end
             
-            -- Combo multiplier indicator
+            -- COMBO COUNTER
             if p.combo > 1 then
-                local comboText = "x" .. p.combo
-                local comboColor = p.combo >= 10 and DP.Colors.MegaCombo or DP.Colors.Combo
+                local comboText = p.combo .. " COMBO"
+                local comboColor = p.combo >= 20 and DP.Colors.UltraCombo or
+                                  (p.combo >= 10 and DP.Colors.MegaCombo or DP.Colors.Combo)
                 comboColor = Color(comboColor.r, comboColor.g, comboColor.b, alpha)
+                
+                -- Shadow
+                draw.SimpleText(
+                    comboText,
+                    "AA_JP_Text",
+                    x + 2,
+                    y + 32 * scale + 2,
+                    Color(0, 0, 0, alpha * 0.6),
+                    TEXT_ALIGN_CENTER,
+                    TEXT_ALIGN_CENTER
+                )
                 
                 draw.SimpleText(
                     comboText,
-                    "AA_Damage_Combo",
+                    "AA_JP_Text",
                     x,
-                    y - 40 * scale,
+                    y + 32 * scale,
                     comboColor,
                     TEXT_ALIGN_CENTER,
                     TEXT_ALIGN_CENTER
@@ -413,22 +524,20 @@ hook.Add("HUDPaint", "AA_DamagePopup_Draw", function()
         end
     end
     
-    -- Draw combo popups
-    if DP.ComboPopups then
-        for _, p in ipairs(DP.ComboPopups) do
-            local screen = p.pos:ToScreen()
-            if screen.visible then
-            
+    -- Draw combo milestone popups
+    for _, p in ipairs(DP.ComboPopups) do
+        local screen = p.pos:ToScreen()
+        if screen.visible then
             local x, y = screen.x, screen.y
             local scale = p.scale
             local alpha = p.alpha
             local color = Color(p.color.r, p.color.g, p.color.b, alpha)
             
-            -- Shadow
+            -- Shadow layers
             for i = 3, 1, -1 do
                 draw.SimpleText(
                     p.text,
-                    "AA_Damage_Kill",
+                    "AA_JP_Combo",
                     x + i * 3 * scale,
                     y + i * 3 * scale,
                     Color(0, 0, 0, alpha * 0.5),
@@ -437,38 +546,50 @@ hook.Add("HUDPaint", "AA_DamagePopup_Draw", function()
                 )
             end
             
-            -- Main combo text
+            -- Glow for high combos
+            if p.combo >= 10 then
+                for i = 1, 3 do
+                    draw.SimpleText(
+                        p.text,
+                        "AA_JP_Combo",
+                        x,
+                        y,
+                        Color(color.r, color.g, color.b, alpha * 0.3),
+                        TEXT_ALIGN_CENTER,
+                        TEXT_ALIGN_CENTER
+                    )
+                end
+            end
+            
+            -- Main text
             draw.SimpleText(
                 p.text,
-                "AA_Damage_Kill",
+                "AA_JP_Combo",
                 x,
                 y,
                 color,
                 TEXT_ALIGN_CENTER,
                 TEXT_ALIGN_CENTER
             )
-            end
         end
     end
     
     -- Draw blood particles
-    if DP.BloodParticles then
-        for _, p in ipairs(DP.BloodParticles) do
-            local screen = p.pos:ToScreen()
-            if screen.visible then
-                surface.SetDrawColor(p.color)
-                surface.DrawRect(
-                    screen.x - p.size/2,
-                    screen.y - p.size/2,
-                    p.size,
-                    p.size
-                )
-            end
+    for _, p in ipairs(DP.BloodParticles) do
+        local screen = p.pos:ToScreen()
+        if screen.visible then
+            surface.SetDrawColor(p.color)
+            surface.DrawRect(
+                screen.x - p.size/2,
+                screen.y - p.size/2,
+                p.size,
+                p.size
+            )
         end
     end
 end)
 
--- Network receiver for our arcade damage system
+-- NETWORK RECEIVERS
 net.Receive("AA_DamagePopup", function()
     local pos = net.ReadVector()
     local damage = net.ReadUInt(16)
@@ -477,17 +598,16 @@ net.Receive("AA_DamagePopup", function()
     local isKill = bit.band(flags, 1) ~= 0
     local isCrit = bit.band(flags, 2) ~= 0
     
-    DP.Create(pos, damage, isKill, isCrit, DP.ComboCount)
+    DP.Create(pos, damage, isKill, isCrit)
 end)
 
--- Also hook into the old ArcadeSpawner damage number system
 net.Receive("ArcadeSpawner_DamageNumber", function()
     local pos = net.ReadVector()
     local damage = net.ReadInt(16)
     local isKill = net.ReadBool()
     
     local isCrit = damage > 50
-    DP.Create(pos, damage, isKill, isCrit, DP.ComboCount)
+    DP.Create(pos, damage, isKill, isCrit)
 end)
 
-print("[Arcade Anomaly]  Damage popup system loaded!")
+print("[Arcade Anomaly]  ULTRA Japanese Damage System loaded!")
