@@ -590,18 +590,19 @@ hook.Add("HUDPaint", "AA_DamagePopup_Draw", function()
 end)
 
 -- NETWORK RECEIVERS
-net.Receive("AA_DamagePopup", function()
+net.Receive("AA_DamagePopup", function(len)
     local pos = net.ReadVector()
     local damage = net.ReadUInt(16)
     local flags = net.ReadUInt(8)
     
-    local isKill = bit.band(flags, 1) ~= 0
-    local isCrit = bit.band(flags, 2) ~= 0
+    -- Manual bit check for Lua 5.1 compatibility
+    local isKill = flags % 2 >= 1
+    local isCrit = math.floor(flags / 2) % 2 >= 1
     
     DP.Create(pos, damage, isKill, isCrit)
 end)
 
-net.Receive("ArcadeSpawner_DamageNumber", function()
+net.Receive("ArcadeSpawner_DamageNumber", function(len)
     local pos = net.ReadVector()
     local damage = net.ReadInt(16)
     local isKill = net.ReadBool()

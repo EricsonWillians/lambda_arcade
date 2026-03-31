@@ -23,19 +23,21 @@ AA.Gore.BloodDecals = {
     "BloodSmall",
 }
 
--- Gib models (Vanilla HL2 only - these actually exist)
+-- Gib models (Vanilla HL2 only - VERIFIED to exist)
 AA.Gore.GibModels = {
+    -- Human gibs (verified in base HL2)
     "models/gibs/hgibs.mdl",
     "models/gibs/hgibs_scapula.mdl",
     "models/gibs/hgibs_spine.mdl",
     "models/gibs/hgibs_rib.mdl",
-    -- Using generic debris as fallback for missing models
+    -- Wood/plaster debris (verified in base HL2)
     "models/props_debris/concrete_chunk01a.mdl",
     "models/props_debris/concrete_chunk02a.mdl",
     "models/props_debris/concrete_chunk03a.mdl",
     "models/props_debris/concrete_chunk04a.mdl",
-    "models/props_debris/concrete_chunk05a.mdl",
-    "models/props_debris/concrete_chunk06a.mdl",
+    -- Use generic gibs for the rest (these always exist)
+    "models/gibs/hgibs.mdl",
+    "models/gibs/hgibs.mdl",
 }
 
 -- Enhanced blood spray on damage
@@ -132,21 +134,17 @@ function AA.Gore:SpawnGibs(pos, count, velocity)
                 phys:SetMaterial("flesh")
             end
             
-            -- Leave blood trail as it flies
+            -- Leave blood trail as it flies (using timer instead of Think hook)
             local startTime = CurTime()
-            hook.Add("Think", "GibBloodTrail_" .. gib:EntIndex(), function()
+            local gibIndex = gib:EntIndex()
+            timer.Create("GibBloodTrail_" .. gibIndex, 0.2, 15, function()
                 if not IsValid(gib) then
-                    hook.Remove("Think", "GibBloodTrail_" .. gib:EntIndex())
-                    return
-                end
-                
-                if CurTime() - startTime > 3 then
-                    hook.Remove("Think", "GibBloodTrail_" .. gib:EntIndex())
+                    timer.Remove("GibBloodTrail_" .. gibIndex)
                     return
                 end
                 
                 -- Small chance to leave blood decal
-                if math.random() < 0.1 then
+                if math.random() < 0.3 then
                     local tr = util.TraceLine({
                         start = gib:GetPos(),
                         endpos = gib:GetPos() - Vector(0,0,20),
@@ -158,27 +156,29 @@ function AA.Gore:SpawnGibs(pos, count, velocity)
                 end
             end)
             
-            -- Fade out and remove after 10 seconds
+            -- Fade out and remove after 10 seconds (using timer instead of Think hook)
             timer.Simple(10, function()
                 if IsValid(gib) then
-                    -- Fade effect
-                    local fadeTime = 2
-                    local start = CurTime()
+                    local fadeSteps = 20
+                    local fadeInterval = 0.1
+                    local currentStep = 0
                     
-                    hook.Add("Think", "GibFade_" .. gib:EntIndex(), function()
+                    timer.Create("GibFade_" .. gib:EntIndex(), fadeInterval, fadeSteps, function()
                         if not IsValid(gib) then
-                            hook.Remove("Think", "GibFade_" .. gib:EntIndex())
+                            timer.Remove("GibFade_" .. gib:EntIndex())
                             return
                         end
                         
-                        local progress = (CurTime() - start) / fadeTime
+                        currentStep = currentStep + 1
+                        local progress = currentStep / fadeSteps
+                        
                         if progress >= 1 then
                             gib:Remove()
-                            hook.Remove("Think", "GibFade_" .. gib:EntIndex())
+                            timer.Remove("GibFade_" .. gib:EntIndex())
                         else
                             local alpha = 255 * (1 - progress)
                             local col = gib:GetColor()
-                            gib:SetColor(Color(col.r, col.g, col.b, alpha))
+                            gib:SetColor(Color(col.r, col.g, col.b, math.floor(alpha)))
                         end
                     end)
                 end

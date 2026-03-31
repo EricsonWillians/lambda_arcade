@@ -833,7 +833,7 @@ function ENT:CreateRagdoll()
             squirt:SetOrigin(rag:GetPos() + offset)
             squirt:SetNormal(VectorRand())
             squirt:SetScale(2)
-            util.Effect("bloodstream", squirt)
+            util.Effect("bloodspray", squirt)
         end
     end
     
@@ -875,7 +875,7 @@ function ENT:CreateRagdoll()
                 spray:SetOrigin(rag:GetPos() + Vector(0, 0, 20))
                 spray:SetNormal(VectorRand())
                 spray:SetScale(1.5)
-                util.Effect("bloodstream", spray)
+                util.Effect("bloodspray", spray)
             end
             
             -- Blood pool underneath
