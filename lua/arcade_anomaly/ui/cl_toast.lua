@@ -183,15 +183,14 @@ function AA.Toast:Draw()
                 nextToast.spawnTime = now
                 table.insert(self.Active, 1, nextToast)
             end
-            continue
+        else
+            -- Calculate position
+            local targetOffset = (i - 1) * config.StackOffset
+            toast.offset = Lerp(FrameTime() * 10, toast.offset, targetOffset)
+            
+            -- Draw the toast
+            self:DrawToast(toast, i)
         end
-        
-        -- Calculate position
-        local targetOffset = (i - 1) * config.StackOffset
-        toast.offset = Lerp(FrameTime() * 10, toast.offset, targetOffset)
-        
-        -- Draw the toast
-        self:DrawToast(toast, i)
     end
 end
 
