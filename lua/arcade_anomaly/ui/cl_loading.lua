@@ -46,11 +46,6 @@ function AA.Loading:Show(title, message, options)
         cancellable = options.cancellable or false,
     }
     
-    -- Disable mouse input unless cancellable
-    if not self.Data.cancellable then
-        gui.EnableScreenClicker(false)
-    end
-    
     -- Play sound
     surface.PlaySound("ui/buttonclickrelease.wav")
     
@@ -102,7 +97,6 @@ function AA.Loading:Hide()
     })
     
     self.Active = false
-    gui.EnableScreenClicker(true)
     
     surface.PlaySound("ui/buttonrollover.wav")
     hook.Run("AA_LoadingComplete")
@@ -129,28 +123,8 @@ hook.Add("HUDPaint", "AA_Loading_Paint", function()
     AA.Loading:Draw()
 end)
 
--- Block input during loading
-hook.Add("PlayerBindPress", "AA_Loading_BlockInput", function(ply, bind, pressed)
-    if AA.Loading.Active and not AA.Loading.Data.cancellable then
-        -- Block most player inputs during loading
-        local blocked = {
-            ["+attack"] = true,
-            ["+attack2"] = true,
-            ["+jump"] = true,
-            ["+duck"] = true,
-            ["+forward"] = true,
-            ["+back"] = true,
-            ["+moveleft"] = true,
-            ["+moveright"] = true,
-            ["+use"] = true,
-            ["+reload"] = true,
-            ["+menu"] = true,
-        }
-        if blocked[bind] then
-            return true
-        end
-    end
-end)
+-- Input blocking removed to prevent mouse issues
+-- The loading screen is visual only and doesn't block gameplay
 
 -- Draw the loading screen
 function AA.Loading:Draw()

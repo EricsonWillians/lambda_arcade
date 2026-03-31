@@ -279,16 +279,16 @@ function ENT:RunBehaviour()
     while true do
         if not IsValid(self) then return end
         
-        -- Update AI think
-        if AA.AI and AA.AI.Base then
-            AA.AI.Base.Think(self)
+        -- Update AI think (call with colon syntax)
+        if AA.AI and AA.AI.Base and AA.AI.Base.Think then
+            AA.AI.Base.Think(AA.AI.Base, self)
         end
         
         -- Run archetype-specific AI if available
         if self.AIClass and AA.AI and AA.AI[self.AIClass] then
             local ai = AA.AI[self.AIClass]
             if ai.Think then
-                ai:Think(self)
+                ai:Think(ai, self)
                 coroutine.yield()
             else
                 -- Fallback to basic behavior

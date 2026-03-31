@@ -338,12 +338,13 @@ end
 function AA.AI.Elite:Evade(ent, target)
     if not ent.loco then return end
     
+    local data = ent.AIData
     local myPos = ent:GetPos()
     local targetPos = target:GetPos()
     local awayDir = (myPos - targetPos):GetNormalized()
     
     -- Dodge to side
-    local lateral = Vector(-awayDir.y, awayDir.x, 0) * data.strafeDirection
+    local lateral = Vector(-awayDir.y, awayDir.x, 0) * (data.strafeDirection or 1)
     local dodgePos = myPos + lateral * 150 + awayDir * 100
     
     ent:SetAnimState(2)

@@ -43,7 +43,12 @@ function AA.AI.Shooter:Think(ent)
     local targetPos = target:GetPos()
     local distSqr = myPos:DistToSqr(targetPos)
     local dist = math.sqrt(distSqr)
-    local hasLOS = ent:HasLineOfSight and ent:HasLineOfSight(target) or true
+    
+    -- Check line of sight
+    local hasLOS = true
+    if ent.HasLineOfSight then
+        hasLOS = ent:HasLineOfSight(target)
+    end
     
     -- Cover logic
     if data.isInCover then

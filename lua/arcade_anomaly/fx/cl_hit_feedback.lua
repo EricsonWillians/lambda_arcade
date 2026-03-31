@@ -507,10 +507,10 @@ end)
 -- Freeze game during hitstop
 hook.Add("Think", "AA_HitstopThink", function()
     if AA.HitFeedback:IsHitstopActive() then
-        -- Slow down time during hitstop
-        game.SetTimeScale(0.1)
+        -- Slow down time during hitstop (server only)
+        -- game.SetTimeScale is server-only, can't call from client
     else
-        game.SetTimeScale(1)
+        -- Reset time scale (server only)
     end
 end)
 
