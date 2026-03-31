@@ -302,12 +302,22 @@ function AA.AI.Base:OnTakeDamage(ent, dmg, attacker)
     -- Switch target if taking heavy damage from someone else
     if IsValid(attacker) and attacker:IsPlayer() and attacker ~= ent.Target then
         local myPos = ent:GetPos()
-        local currentDist = ent.Target and myPos:DistTo(ent.Target:GetPos()) or math.huge
-        local newDist = myPos:DistTo(attacker:GetPos())
+        local currentDist = math.huge
+        if IsValid(ent.Target) then
+            local targetPos = ent.Target:GetPos()
+            if targetPos then
+                currentDist = myPos:DistTo(targetPos)
+            end
+        end
         
-        -- Switch if new attacker is significantly closer
-        if newDist < currentDist * 0.6 then
-            ent.Target = attacker
+        local attackerPos = attacker:GetPos()
+        if attackerPos then
+            local newDist = myPos:DistTo(attackerPos)
+            
+            -- Switch if new attacker is significantly closer
+            if newDist < currentDist * 0.6 then
+                ent.Target = attacker
+            end
         end
     end
     
@@ -316,9 +326,22 @@ end
 
 -- Find a point to flee to
 function AA.AI.Base:FindFleePoint(ent, threat)
+    if not IsValid(ent) then return nil end
+    
     local myPos = ent:GetPos()
-    local threatPos = IsValid(threat) and threat:GetPos() or myPos
+    local threatPos = myPos -- default to my position if threat is invalid
+    
+    if IsValid(threat) then
+        local tPos = threat:GetPos()
+        if tPos then
+            threatPos = tPos
+        end
+    end
+    
     local awayDir = (myPos - threatPos):GetNormalized()
+    if awayDir:LengthSqr() < 0.001 then
+        awayDir = Vector(1, 0, 0) -- default direction
+    end
     
     -- Find furthest valid point in flee direction
     local bestPoint = nil

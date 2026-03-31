@@ -20,15 +20,18 @@ AA.Navigation.Config = {
 
 -- Initialize navigation for an entity
 function AA.Navigation:Initialize(ent)
+    if not IsValid(ent) then return end
+    
+    local pos = ent:GetPos()
     ent.NavData = {
         lastPathUpdate = 0,
         path = {},                  -- Current path as array of vectors
         currentNode = 1,            -- Index of current target node
         stuckCounter = 0,
-        lastPos = ent:GetPos(),
+        lastPos = pos,
         lastMoveTime = CurTime(),
         isStuck = false,
-        lastGroundPos = ent:GetPos(),
+        lastGroundPos = pos,
         state = "idle",             -- idle, moving, jumping, stuck
         targetPos = nil,
         velocity = Vector(0,0,0),
@@ -38,8 +41,12 @@ end
 -- Main update function - call every frame
 function AA.Navigation:Update(ent, targetPos, speed)
     if not IsValid(ent) then return end
-    if not ent.NavData then self:Initialize(ent) end
+    if not ent.NavData then 
+        self:Initialize(ent)
+        if not ent.NavData then return end -- Initialize failed
+    end
     if not ent.loco then return end
+    if not targetPos then return end
     
     local nav = ent.NavData
     local now = CurTime()
