@@ -150,12 +150,32 @@ hook.Add("PlayerDisconnected", "ArcadeSpawner_CleanupPlayer", function(ply)
     end
 end)
 
+-- Track damage dealt to enemies for accurate kill detection
+UIManager.DamageTracker = {}
+
 -- Hook into damage events for damage numbers
 hook.Add("EntityTakeDamage", "ArcadeSpawner_DamageNumbers", function(target, dmginfo)
     -- Check if target is an Arcade Anomaly enemy (has Archetype property)
     if IsValid(target) and target.Archetype then
         local damage = math.floor(dmginfo:GetDamage())
-        local isKill = (target:Health() - damage) <= 0
+        local currentHealth = target:Health()
+        local maxHealth = target:GetMaxHealth()
+        
+        -- Track damage dealt to this enemy
+        local entIndex = target:EntIndex()
+        UIManager.DamageTracker[entIndex] = (UIManager.DamageTracker[entIndex] or 0) + damage
+        
+        -- Only show KILL if health is actually low enough AND it's a significant hit
+        -- For high-HP enemies (brutes, elites), we need to be more careful
+        local predictedHealth = currentHealth - damage
+        local isKill = predictedHealth <= 0
+        
+        -- For enemies with >100 HP, only show KILL on the final blow
+        -- This prevents false KILL messages on tanky enemies
+        if maxHealth > 100 and predictedHealth > -50 then
+            -- Don't show KILL unless they're definitely dead
+            isKill = predictedHealth <= 0 and damage >= currentHealth * 0.5
+        end
         
         UIManager.ShowDamageNumber(target:GetPos() + Vector(0, 0, 50), damage, isKill)
         
@@ -170,5 +190,12 @@ hook.Add("EntityTakeDamage", "ArcadeSpawner_DamageNumbers", function(target, dmg
                 end
             end
         end
+    end
+end)
+
+-- Clean up damage tracker when enemies are removed
+hook.Add("EntityRemoved", "ArcadeSpawner_CleanupDamageTracker", function(ent)
+    if ent and ent.Archetype then
+        UIManager.DamageTracker[ent:EntIndex()] = nil
     end
 end)

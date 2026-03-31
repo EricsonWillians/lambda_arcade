@@ -13,13 +13,15 @@ include("shared.lua")
 function ENT:Initialize()
     -- Use a VERY visible model - energy ball
     self:SetModel("models/Items/combine_rifle_ammo01.mdl")
-    self:PhysicsInit(SOLID_VPHYSICS)
+    
+    -- Use smaller collision box for fair gameplay (visual size separate)
+    self:PhysicsInitSphere(8, "default_silent")  -- Small 8-unit sphere collision
     self:SetMoveType(MOVETYPE_VPHYSICS)
     self:SetSolid(SOLID_VPHYSICS)
     self:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
     
-    -- MASSIVE size for visibility
-    self:SetModelScale(3.0)
+    -- Large visual size for visibility, but separate from collision
+    self:SetModelScale(2.5)
     
     local phys = self:GetPhysicsObject()
     if IsValid(phys) then
@@ -48,8 +50,8 @@ function ENT:Initialize()
     
     -- ULTRA VISIBLE TRAIL - thick, bright, long-lasting
     util.SpriteTrail(self, 0, Color(100, 200, 255), false, 
-        24,  -- Start width (HUGE)
-        8,   -- End width
+        20,  -- Start width (visible but not huge)
+        6,   -- End width
         0.4, -- Lifetime
         0.5, -- Texture scale
         "trails/laser.vmt"
@@ -57,8 +59,8 @@ function ENT:Initialize()
     
     -- Secondary red trail for contrast
     util.SpriteTrail(self, 0, Color(255, 100, 100), false,
-        16,
-        4,
+        12,
+        3,
         0.3,
         0.5,
         "trails/plasma.vmt"
@@ -105,6 +107,37 @@ function ENT:Think()
         effect:SetNormal(VectorRand())
         effect:SetScale(1)
         util.Effect("cball_bounce", effect)
+    end
+    
+    -- Proximity check for players (for smoother hit detection)
+    -- Only check if physics collision didn't catch it
+    local pos = self:GetPos()
+    for _, ply in ipairs(player.GetAll()) do
+        if IsValid(ply) and ply:Alive() then
+            local dist = pos:Distance(ply:GetPos())
+            if dist < 40 then  -- Close enough to count as hit
+                -- Apply damage
+                local dmg = DamageInfo()
+                dmg:SetDamage(self.Damage or 15)
+                dmg:SetDamageType(DMG_ENERGYBEAM)
+                dmg:SetAttacker(self.Owner or self)
+                dmg:SetInflictor(self)
+                ply:TakeDamageInfo(dmg)
+                
+                -- Effects
+                local effect = EffectData()
+                effect:SetOrigin(ply:GetPos())
+                effect:SetScale(2)
+                util.Effect("BloodImpact", effect)
+                
+                -- Remove projectile
+                if IsValid(self.Light) then
+                    self.Light:Remove()
+                end
+                self:Remove()
+                return
+            end
+        end
     end
     
     self:NextThink(CurTime() + 0.05)
