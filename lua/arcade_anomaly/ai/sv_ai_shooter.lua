@@ -47,30 +47,56 @@ function AA.AI.Shooter:OnAttack(ent, target)
     -- Set attack state
     ent.InAttack = true
     data.lastShotTime = CurTime()
-    
-    -- Face target
-    ent:SetTargetYaw(target:GetPos())
-    ent:SetAnimState(3) -- Attack animation
     ent.TargetSpeed = 0
     
+    -- FACE TARGET AGGRESSIVELY - Keep facing during entire attack
+    local targetPos = target:GetPos()
+    ent:SetTargetYaw(targetPos)
+    if ent.loco then
+        ent.loco:FaceTowards(targetPos)
+    end
+    
     -- CHARGING PHASE - Visual warning before firing
-    local chargeTime = 0.4
-    local chargeStart = CurTime()
+    local chargeTime = 0.5
     
-    -- Create charging effect
-    local chargePos = ent:WorldSpaceCenter() + ent:GetForward() * 20
-    local effect = EffectData()
-    effect:SetOrigin(chargePos)
-    effect:SetScale(2)
-    util.Effect("cball_bounce", effect)
-    
-    -- Wait for charge
-    coroutine.wait(chargeTime)
+    -- Create charging effect and keep facing target
+    for i = 1, 5 do
+        if not IsValid(ent) or not IsValid(target) then
+            ent.InAttack = false
+            return true
+        end
+        
+        -- Continuously face target during charge
+        targetPos = target:GetPos()
+        ent:SetTargetYaw(targetPos)
+        if ent.loco then
+            ent.loco:FaceTowards(targetPos)
+        end
+        
+        -- Charging effect
+        if i % 2 == 0 then
+            local chargePos = ent:WorldSpaceCenter() + ent:GetForward() * 20
+            local effect = EffectData()
+            effect:SetOrigin(chargePos)
+            effect:SetScale(2)
+            util.Effect("cball_bounce", effect)
+        end
+        
+        coroutine.wait(chargeTime / 5)
+    end
     
     if not IsValid(ent) or not IsValid(target) then
         ent.InAttack = false
         return true
     end
+    
+    -- Face target one final time before firing
+    targetPos = target:GetPos()
+    ent:SetTargetYaw(targetPos)
+    if ent.loco then
+        ent.loco:FaceTowards(targetPos)
+    end
+    ent:SetAnimState(3) -- Attack animation
     
     -- FIRE PROJECTILE with poor accuracy
     self:FireProjectile(ent, target)

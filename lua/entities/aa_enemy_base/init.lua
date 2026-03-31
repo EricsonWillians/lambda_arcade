@@ -55,10 +55,10 @@ function ENT:Initialize()
     self.NextAttack = 0
     self.InAttack = false
     
-    -- Rotation System
+    -- Rotation System - faster turning to face player
     self.CurrentYaw = self:GetAngles().yaw
     self.TargetYaw = self.CurrentYaw
-    self.TurnSpeed = 360
+    self.TurnSpeed = 720  -- 720 degrees per second = very fast turning
     
     -- Targeting & Search
     self.Target = nil
@@ -326,16 +326,21 @@ function ENT:ChaseTarget(target)
         -- Chase
         self:SetAnimState(1)
         self.TargetSpeed = self.RunSpeed
-        self:SetTargetYaw(target:GetPos())
+        
+        -- ALWAYS face target aggressively
+        local targetPos = target:GetPos()
+        self:SetTargetYaw(targetPos)
+        if self.loco then
+            self.loco:FaceTowards(targetPos)
+        end
         
         -- Use navigation if available
         if AA.Navigation then
-            AA.Navigation:Update(self, target:GetPos(), self.RunSpeed)
+            AA.Navigation:Update(self, targetPos, self.RunSpeed)
         else
             if self.loco then
-                self.loco:Approach(target:GetPos(), self.RunSpeed)
+                self.loco:Approach(targetPos, self.RunSpeed)
                 self.loco:SetDesiredSpeed(self.RunSpeed)
-                self.loco:FaceTowards(target:GetPos())
             end
         end
         

@@ -35,32 +35,32 @@ DP.Colors = {
     Blood       = Color(139, 0, 0),         -- Dark red
 }
 
--- JAPANESE ARCADE EXPRESSIONS
+-- JAPANESE ARCADE EXPRESSIONS (Using ASCII art / stylized text for compatibility)
 DP.JP = {
-    -- Damage suffixes (small to large)
-    DamageSmall   = "",         -- Small hit
-    DamageMedium  = "",         -- Medium hit  
-    DamageLarge   = "",         -- Large hit
-    DamageHuge    = "",         -- Huge hit
+    -- Damage suffixes (stylized)
+    DamageSmall   = " dmg",
+    DamageMedium  = " DMG", 
+    DamageLarge   = " DMG!!",
+    DamageHuge    = " MAXDMG",
     
-    -- Hit types
-    Hit       = "HIT",          -- Generic hit
-    Smash     = "",             -- Heavy strike
-    Crash     = "",             -- Impact
-    Slash     = "",             -- Cut
+    -- Hit types (stylized like Japanese arcade)
+    Hit       = "HIT!",
+    Smash     = "SMASH!",
+    Crash     = "CRASH!",
+    Slash     = "SLASH!",
     
     -- Critical/Status
-    Critical  = "CRITICAL",     -- Critical hit
-    Fatal     = "",             -- Fatal
-    Destroy   = "",             -- Destroy
+    Critical  = "CRIT!!",
+    Fatal     = "FATAL!",
+    Destroy   = "DESTROY!",
     
     -- Kill confirmations
-    Kill      = "KILL",         -- Basic kill
-    Slain     = "",             -- Slain
-    Obliterate = "",            -- Obliterated
-    Annihilate = "",            -- Annihilated
+    Kill      = "KILL!",
+    Slain     = "SLAIN!",
+    Obliterate = "OBLITERATE!",
+    Annihilate = "ANNIHILATE!",
     
-    -- Combo milestones
+    -- Combo milestones (Capcom style)
     Combo3    = "NICE!",
     Combo5    = "GOOD!",
     Combo10   = "GREAT!",
@@ -72,56 +72,56 @@ DP.JP = {
     Combo100  = "LEGENDARY!",
 }
 
--- INITIALIZE FONTS WITH JAPANESE SUPPORT
+-- INITIALIZE FONTS - ARCADE STYLE (Bold, high contrast)
 hook.Add("Initialize", "AA_DamagePopup_InitFonts", function()
-    -- Main damage number font - uses Arial Unicode for Japanese
+    -- Main damage number font - BOLD arcade style
     surface.CreateFont("AA_JP_Damage", {
-        font = "Arial",
-        size = 42,
-        weight = 800,
+        font = "Impact",
+        size = 48,
+        weight = 900,
         antialias = true,
         outline = false,
     })
     
     -- Shadow/blur font
     surface.CreateFont("AA_JP_Damage_Blur", {
-        font = "Arial",
-        size = 42,
-        weight = 800,
+        font = "Impact",
+        size = 48,
+        weight = 900,
         antialias = true,
-        blursize = 6,
+        blursize = 8,
     })
     
     -- Critical hit font - larger, more dramatic
     surface.CreateFont("AA_JP_Critical", {
-        font = "Arial Black",
-        size = 56,
+        font = "Impact",
+        size = 64,
         weight = 900,
         antialias = true,
-        italic = true,
+        italic = false,
     })
     
     -- Kill confirm font
     surface.CreateFont("AA_JP_Kill", {
         font = "Impact",
-        size = 64,
+        size = 72,
         weight = 900,
         antialias = true,
     })
     
-    -- Japanese text font
+    -- Expression text font (HIT, CRIT, etc)
     surface.CreateFont("AA_JP_Text", {
-        font = "MS Gothic",  -- Japanese font
-        size = 28,
-        weight = 700,
+        font = "Arial Black",
+        size = 32,
+        weight = 900,
         antialias = true,
         outline = true,
     })
     
     -- Combo milestone font
     surface.CreateFont("AA_JP_Combo", {
-        font = "Arial Black",
-        size = 48,
+        font = "Impact",
+        size = 52,
         weight = 900,
         antialias = true,
     })
