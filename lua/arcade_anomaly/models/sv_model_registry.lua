@@ -28,70 +28,103 @@ function AA.ModelRegistry:Initialize()
 end
 
 function AA.ModelRegistry:RegisterFallbackModels()
-    -- These are built-in HL2 models that always work
-    local fallbacks = {
-        -- Humanoids - work for ANY archetype
-        { path = "models/Humans/Group01/male_01.mdl", tags = {"humanoid"} },
-        { path = "models/Humans/Group01/male_02.mdl", tags = {"humanoid"} },
-        { path = "models/Humans/Group01/male_03.mdl", tags = {"humanoid"} },
-        { path = "models/Humans/Group01/male_04.mdl", tags = {"humanoid"} },
-        { path = "models/Humans/Group01/male_05.mdl", tags = {"humanoid"} },
-        { path = "models/Humans/Group01/male_06.mdl", tags = {"humanoid"} },
-        { path = "models/Humans/Group01/male_07.mdl", tags = {"humanoid"} },
-        { path = "models/Humans/Group01/male_08.mdl", tags = {"humanoid"} },
-        { path = "models/Humans/Group01/male_09.mdl", tags = {"humanoid"} },
-        { path = "models/Humans/Group01/female_01.mdl", tags = {"humanoid"} },
-        { path = "models/Humans/Group01/female_02.mdl", tags = {"humanoid"} },
-        { path = "models/Humans/Group01/female_03.mdl", tags = {"humanoid"} },
-        { path = "models/Humans/Group01/female_04.mdl", tags = {"humanoid"} },
-        { path = "models/Humans/Group01/female_06.mdl", tags = {"humanoid"} },
-        { path = "models/Humans/Group01/female_07.mdl", tags = {"humanoid"} },
+    -- PRIORITY ORDER: Workshop > Mounted Games > Fallback HL2
+    -- These are built-in HL2 models that always work as ultimate fallback
+    
+    local vanillaModels = {
+        -- GROUP 1: High Quality Character Models (Preferred for fresh installs)
+        -- HL2 Citizens - most reliable with good animations
+        { path = "models/Humans/Group01/male_01.mdl", tags = {"humanoid", "citizen"}, priority = 100 },
+        { path = "models/Humans/Group01/male_02.mdl", tags = {"humanoid", "citizen"}, priority = 100 },
+        { path = "models/Humans/Group01/male_03.mdl", tags = {"humanoid", "citizen"}, priority = 100 },
+        { path = "models/Humans/Group01/male_04.mdl", tags = {"humanoid", "citizen"}, priority = 100 },
+        { path = "models/Humans/Group01/male_05.mdl", tags = {"humanoid", "citizen"}, priority = 100 },
+        { path = "models/Humans/Group01/male_06.mdl", tags = {"humanoid", "citizen"}, priority = 100 },
+        { path = "models/Humans/Group01/male_07.mdl", tags = {"humanoid", "citizen"}, priority = 100 },
+        { path = "models/Humans/Group01/male_08.mdl", tags = {"humanoid", "citizen"}, priority = 100 },
+        { path = "models/Humans/Group01/male_09.mdl", tags = {"humanoid", "citizen"}, priority = 100 },
+        { path = "models/Humans/Group01/female_01.mdl", tags = {"humanoid", "citizen"}, priority = 100 },
+        { path = "models/Humans/Group01/female_02.mdl", tags = {"humanoid", "citizen"}, priority = 100 },
+        { path = "models/Humans/Group01/female_03.mdl", tags = {"humanoid", "citizen"}, priority = 100 },
+        { path = "models/Humans/Group01/female_04.mdl", tags = {"humanoid", "citizen"}, priority = 100 },
+        { path = "models/Humans/Group01/female_06.mdl", tags = {"humanoid", "citizen"}, priority = 100 },
+        { path = "models/Humans/Group01/female_07.mdl", tags = {"humanoid", "citizen"}, priority = 100 },
         
-        -- Combine - work for any archetype
-        { path = "models/combine_soldier.mdl", tags = {"soldier", "combine"} },
-        { path = "models/combine_super_soldier.mdl", tags = {"soldier", "combine", "elite"} },
-        { path = "models/combine_soldier_prisonguard.mdl", tags = {"soldier", "combine"} },
-        { path = "models/police.mdl", tags = {"soldier", "police"} },
+        -- Rebels (Group02) - more variety
+        { path = "models/Humans/Group02/male_02.mdl", tags = {"humanoid", "rebel"}, priority = 95 },
+        { path = "models/Humans/Group02/male_04.mdl", tags = {"humanoid", "rebel"}, priority = 95 },
+        { path = "models/Humans/Group02/male_06.mdl", tags = {"humanoid", "rebel"}, priority = 95 },
+        { path = "models/Humans/Group02/male_08.mdl", tags = {"humanoid", "rebel"}, priority = 95 },
+        { path = "models/Humans/Group02/female_02.mdl", tags = {"humanoid", "rebel"}, priority = 95 },
+        { path = "models/Humans/Group02/female_04.mdl", tags = {"humanoid", "rebel"}, priority = 95 },
         
-        -- Zombies/Undead
-        { path = "models/zombie/classic.mdl", tags = {"undead", "zombie"} },
-        { path = "models/zombie/fast_zombie.mdl", tags = {"undead", "zombie", "fast"} },
-        { path = "models/zombie/poison.mdl", tags = {"undead", "zombie", "elite"} },
-        { path = "models/zombie/zombie_soldier.mdl", tags = {"undead", "zombie", "soldier"} },
+        -- Combine Soldiers - excellent for military archetypes
+        { path = "models/combine_soldier.mdl", tags = {"soldier", "combine", "military"}, priority = 90 },
+        { path = "models/combine_soldier_prisonguard.mdl", tags = {"soldier", "combine", "military"}, priority = 90 },
+        { path = "models/combine_super_soldier.mdl", tags = {"soldier", "combine", "military", "elite"}, priority = 85 },
+        { path = "models/police.mdl", tags = {"soldier", "police", "military"}, priority = 90 },
         
-        -- Creatures
-        { path = "models/headcrabclassic.mdl", tags = {"creature", "small"}, scale = 1.5 },
-        { path = "models/headcrabblack.mdl", tags = {"creature", "small", "elite"}, scale = 1.5 },
-        { path = "models/headcrab.mdl", tags = {"creature", "small"}, scale = 1.5 },
-        { path = "models/antlion.mdl", tags = {"creature", "alien"} },
-        { path = "models/antlion_guard.mdl", tags = {"creature", "alien", "large", "elite"}, scale = 0.7 },
+        -- GROUP 2: Zombie Types (Good for undead archetypes)
+        { path = "models/zombie/classic.mdl", tags = {"undead", "zombie", "brute"}, priority = 80 },
+        { path = "models/zombie/fast_zombie.mdl", tags = {"undead", "zombie", "fast", "rusher"}, priority = 80 },
+        { path = "models/zombie/poison.mdl", tags = {"undead", "zombie", "elite"}, priority = 75 },
+        { path = "models/zombie/zombie_soldier.mdl", tags = {"undead", "zombie", "soldier"}, priority = 80 },
         
-        -- Machines
-        { path = "models/combine_strider.mdl", tags = {"machine", "large", "elite"}, scale = 0.3 },
-        { path = "models/combine_dropship.mdl", tags = {"machine", "vehicle"}, scale = 0.2 },
-        { path = "models/combine_helicopter.mdl", tags = {"machine", "vehicle"}, scale = 0.15 },
+        -- GROUP 3: Creatures (Unique types)
+        { path = "models/antlion.mdl", tags = {"creature", "alien", "fast"}, priority = 70 },
+        { path = "models/antlion_guard.mdl", tags = {"creature", "alien", "large", "elite", "brute"}, scale = 0.7, priority = 65 },
         
-        -- CS:S Mounted Models (use player model format)
-        { path = "models/player/ct_gign.mdl", tags = {"humanoid", "soldier"} },
-        { path = "models/player/ct_gsg9.mdl", tags = {"humanoid", "soldier"} },
-        { path = "models/player/ct_sas.mdl", tags = {"humanoid", "soldier"} },
-        { path = "models/player/ct_urban.mdl", tags = {"humanoid", "soldier"} },
-        { path = "models/player/t_arctic.mdl", tags = {"humanoid", "terrorist"} },
-        { path = "models/player/t_guerilla.mdl", tags = {"humanoid", "terrorist"} },
-        { path = "models/player/t_leet.mdl", tags = {"humanoid", "terrorist"} },
-        { path = "models/player/t_phoenix.mdl", tags = {"humanoid", "terrorist"} },
+        -- GROUP 4: CS:S Models (If mounted - better than HL2 for variety)
+        { path = "models/player/ct_gign.mdl", tags = {"humanoid", "soldier", "military"}, priority = 110 },
+        { path = "models/player/ct_gsg9.mdl", tags = {"humanoid", "soldier", "military"}, priority = 110 },
+        { path = "models/player/ct_sas.mdl", tags = {"humanoid", "soldier", "military"}, priority = 110 },
+        { path = "models/player/ct_urban.mdl", tags = {"humanoid", "soldier", "military"}, priority = 110 },
+        { path = "models/player/t_arctic.mdl", tags = {"humanoid", "terrorist", "military"}, priority = 110 },
+        { path = "models/player/t_guerilla.mdl", tags = {"humanoid", "terrorist", "military"}, priority = 110 },
+        { path = "models/player/t_leet.mdl", tags = {"humanoid", "terrorist", "military"}, priority = 110 },
+        { path = "models/player/t_phoenix.mdl", tags = {"humanoid", "terrorist", "military"}, priority = 110 },
         
-        -- Skeleton (for ragdolls)
-        { path = "models/player/skeleton.mdl", tags = {"undead"} },
+        -- GROUP 5: Special/NPC Models
+        { path = "models/alyx.mdl", tags = {"humanoid", "rebel", "elite"}, priority = 60 },
+        { path = "models/barney.mdl", tags = {"humanoid", "soldier"}, priority = 60 },
+        { path = "models/Eli.mdl", tags = {"humanoid", "citizen"}, priority = 60 },
+        { path = "models/mossman.mdl", tags = {"humanoid", "citizen"}, priority = 60 },
+        { path = "models/Kleiner.mdl", tags = {"humanoid", "scientist"}, priority = 60 },
+        { path = "models/Monk.mdl", tags = {"humanoid", "rebel"}, priority = 60 },
+        
+        -- GROUP 6: Skeleton for visual variety
+        { path = "models/player/skeleton.mdl", tags = {"undead", "skeleton"}, priority = 50 },
     }
     
-    for _, data in ipairs(fallbacks) do
-        self:RegisterModel(data.path, {
-            tags = data.tags,
-            scale = data.scale,
+    -- Register valid models only
+    local registeredCount = 0
+    
+    for _, data in ipairs(vanillaModels) do
+        -- Check if model actually exists
+        if util.IsValidModel(data.path) then
+            self:RegisterModel(data.path, {
+                tags = data.tags,
+                scale = data.scale,
+                isFallback = false, -- These are proper vanilla models, not fallbacks
+                isVanilla = true,
+                approved = true,
+                priority = data.priority or 50,
+            })
+            registeredCount = registeredCount + 1
+        end
+    end
+    
+    -- Register ultimate fallback only if nothing else worked
+    if registeredCount == 0 then
+        print("[AA ModelRegistry] WARNING: No vanilla models found! Using ultimate fallback.")
+        self:RegisterModel("models/Humans/Group01/male_07.mdl", {
+            tags = {"humanoid", "fallback"},
             isFallback = true,
             approved = true,
+            priority = 1,
         })
+    else
+        print(string.format("[AA ModelRegistry] Registered %d vanilla HL2/CS:S models", registeredCount))
     end
 end
 
@@ -183,52 +216,68 @@ function AA.ModelRegistry:IsVanillaModel(path)
 end
 
 function AA.ModelRegistry:GetModelForArchetype(archetype, isElite)
-    -- Build list of valid models
-    local workshop = {}  -- True workshop models (exciting!)
-    local mounted = {}   -- CS:S/HL2 mounted models (boring)
-    local fallbacks = {}
+    -- Build list of valid models by category
+    local workshop = {}      -- User's workshop addons (highest priority)
+    local vanilla = {}       -- HL2/CS:S vanilla models (medium priority)
+    local fallbacks = {}     -- Absolute fallback models (lowest priority)
     
     for path, model in pairs(self.Models) do
         if model.approved and not model.blacklisted then
             if model.isFallback then
                 table.insert(fallbacks, model)
-            elseif self:IsVanillaModel(path) then
-                table.insert(mounted, model)
+            elseif model.isVanilla then
+                table.insert(vanilla, model)
             else
                 table.insert(workshop, model)
             end
         end
     end
     
-    print(string.format("[AA ModelSelect] Workshop: %d, Mounted: %d, Fallbacks: %d", 
-        #workshop, #mounted, #fallbacks))
+    print(string.format("[AA ModelSelect] Workshop: %d, Vanilla: %d, Fallbacks: %d", 
+        #workshop, #vanilla, #fallbacks))
     
-    -- Use workshop models ONLY if we have enough
     local selected = nil
+    local source = ""
+    
+    -- PRIORITY 1: Workshop models (if we have enough variety)
     if #workshop >= 3 then
-        -- Pick random WORKSHOP model only
+        -- Pick random workshop model
         selected = workshop[math.random(1, #workshop)]
-        print("[AA ModelSelect] Using WORKSHOP: " .. selected.path)
+        source = "WORKSHOP"
+        
+    -- PRIORITY 2: Mix of workshop and vanilla (if some workshop exists)
+    elseif #workshop > 0 and #vanilla > 0 then
+        -- 70% chance to pick workshop, 30% vanilla
+        if math.random() < 0.7 then
+            selected = workshop[math.random(1, #workshop)]
+            source = "WORKSHOP"
+        else
+            selected = vanilla[math.random(1, #vanilla)]
+            source = "VANILLA"
+        end
+        
+    -- PRIORITY 3: Workshop only (limited but exists)
     elseif #workshop > 0 then
-        -- Not enough workshop, mix with mounted
-        local all = {}
-        for _, m in ipairs(workshop) do table.insert(all, m) end
-        for _, m in ipairs(mounted) do table.insert(all, m) end
-        selected = all[math.random(1, #all)]
-        print("[AA ModelSelect] Using MIXED: " .. selected.path)
-    elseif #mounted > 0 then
-        -- Only mounted (CS:S/HL2) available
-        selected = mounted[math.random(1, #mounted)]
-        print("[AA ModelSelect] Using MOUNTED: " .. selected.path)
+        selected = workshop[math.random(1, #workshop)]
+        source = "WORKSHOP"
+        
+    -- PRIORITY 4: Vanilla HL2/CS:S models (fresh install scenario)
+    elseif #vanilla > 0 then
+        selected = vanilla[math.random(1, #vanilla)]
+        source = "VANILLA"
+        
+    -- PRIORITY 5: Ultimate fallback (emergency)
     elseif #fallbacks > 0 then
-        -- Only fallbacks
         selected = fallbacks[math.random(1, #fallbacks)]
-        print("[AA ModelSelect] Using FALLBACK: " .. selected.path)
+        source = "FALLBACK"
+        
+    -- PRIORITY 6: Create emergency fallback
     else
-        -- No models at all
-        print("[AA ModelSelect] NO MODELS AVAILABLE!")
+        print("[AA ModelSelect] NO MODELS AVAILABLE! Using emergency fallback.")
         return self:GetUltimateFallback()
     end
+    
+    print(string.format("[AA ModelSelect] Using %s: %s", source, selected.path))
     
     -- Update usage stats
     selected.lastUsed = CurTime()
