@@ -1,6 +1,8 @@
 --[[
-    Arcade Anomaly: Enhanced End Screen
-    Victory/Defeat screen with arcade flair
+    Arcade Anomaly: ULTRA HIGH CONTRAST End Screen
+    
+    Dark gothic theme with excellent readability.
+    No excessive bright red - clean, sharp, professional.
 --]]
 
 AA.EndScreen = AA.EndScreen or {}
@@ -8,6 +10,80 @@ AA.EndScreen.Data = nil
 AA.EndScreen.Visible = false
 AA.EndScreen.AnimTime = 0
 AA.EndScreen.StatReveals = {}
+
+-- Color palette for HIGH CONTRAST
+AA.EndScreen.Colors = {
+    bgDark      = Color(8, 8, 12),          -- Almost black background
+    bgPanel     = Color(20, 20, 28),        -- Dark panel
+    bgPanelAlt  = Color(25, 25, 35),        -- Slightly lighter panel
+    
+    textMain    = Color(255, 255, 255),     -- Pure white
+    textDim     = Color(180, 180, 190),     -- Dimmed text
+    textDark    = Color(120, 120, 130),     -- Dark text
+    
+    accentGold  = Color(255, 200, 80),      -- Gold for high scores
+    accentRed   = Color(220, 60, 60),       -- Muted red (not blinding)
+    accentBlue  = Color(80, 160, 255),      -- Blue accent
+    accentGreen = Color(80, 200, 120),      -- Green accent
+    
+    border      = Color(60, 60, 70),        -- Subtle border
+    borderLight = Color(100, 100, 110),     -- Lighter border
+    
+    shadow      = Color(0, 0, 0, 220),      -- Strong shadow
+}
+
+-- Create high contrast fonts
+hook.Add("Initialize", "AA_EndScreen_InitFonts", function()
+    surface.CreateFont("AA_End_Title", {
+        font = "Impact",
+        size = 72,
+        weight = 900,
+        antialias = true,
+    })
+    
+    surface.CreateFont("AA_End_Title_Glow", {
+        font = "Impact",
+        size = 72,
+        weight = 900,
+        antialias = true,
+        blursize = 12,
+    })
+    
+    surface.CreateFont("AA_End_Score", {
+        font = "Impact",
+        size = 56,
+        weight = 900,
+        antialias = true,
+    })
+    
+    surface.CreateFont("AA_End_Label", {
+        font = "Arial",
+        size = 18,
+        weight = 600,
+        antialias = true,
+    })
+    
+    surface.CreateFont("AA_End_Value", {
+        font = "Impact",
+        size = 36,
+        weight = 700,
+        antialias = true,
+    })
+    
+    surface.CreateFont("AA_End_Button", {
+        font = "Impact",
+        size = 28,
+        weight = 700,
+        antialias = true,
+    })
+    
+    surface.CreateFont("AA_End_Small", {
+        font = "Arial",
+        size = 16,
+        weight = 500,
+        antialias = true,
+    })
+end)
 
 -- Network handler
 hook.Add("AA_ShowEndScreen", "AA_EndScreen_Show", function(data)
@@ -38,213 +114,202 @@ function AA.EndScreen:Draw()
     if not data then return end
     
     local t = self.AnimTime
+    local C = self.Colors
     
-    -- Background fade in - LIGHTER for better contrast
-    local bgAlpha = math.min(t * 255, 245)
-    surface.SetDrawColor(15, 15, 22, bgAlpha)
+    -- SOLID dark background (no transparency issues)
+    surface.SetDrawColor(C.bgDark)
     surface.DrawRect(0, 0, w, h)
     
-    -- Animated grid - MORE VISIBLE
-    surface.SetDrawColor(60, 60, 80, 120)
-    local gridSize = 50
-    local gridOffset = (t * 20) % gridSize
-    for x = -gridSize, w, gridSize do
-        surface.DrawLine(x + gridOffset, 0, x + gridOffset, h)
+    -- Subtle radial gradient effect (dark vignette)
+    for i = 1, 5 do
+        local alpha = 30 - i * 5
+        surface.SetDrawColor(0, 0, 0, alpha)
+        surface.DrawRect(0, 0, w, h * 0.1 * i)
+        surface.DrawRect(0, h * (1 - 0.1 * i), w, h * 0.1 * i)
     end
-    for y = -gridSize, h, gridSize do
-        surface.DrawLine(0, y + gridOffset, w, y + gridOffset)
-    end
-    
-    -- Vignette - STRONGER for text focus
-    surface.SetDrawColor(0, 0, 0, 200)
-    surface.DrawRect(0, 0, w, h * 0.25)
-    surface.DrawRect(0, h * 0.75, w, h * 0.25)
     
     local cx = w / 2
-    local startY = h * 0.12
+    local startY = h * 0.08
     
-    -- Title animation
+    -- TITLE SECTION
     local titleY = startY
-    local titleScale = math.min(t * 2, 1)
-    local titleAlpha = math.min(t * 400, 255)
+    local titleAlpha = math.min(t * 3, 1)
     
     if data.beaten then
-        -- Victory effects
-        local flash = math.abs(math.sin(t * 6)) * 50
+        -- VICTORY - High Score
         local titleText = "NEW HIGH SCORE!"
         
-        -- Glow layers
-        for i = 1, 3 do
-            local glowSize = i * 8
-            local glowAlpha = (100 - i * 25) + flash
-            draw.SimpleText(titleText, "AA_Title_Glow", cx, titleY, Color(255, 200, 50, glowAlpha), TEXT_ALIGN_CENTER)
-        end
+        -- Shadow
+        draw.SimpleText(titleText, "AA_End_Title", cx + 3, titleY + 3, Color(0, 0, 0, 200 * titleAlpha), TEXT_ALIGN_CENTER)
         
-        -- Main title
-        local color = Color(255, 215, 0, titleAlpha)
-        draw.SimpleText(titleText, "AA_Title", cx, titleY, color, TEXT_ALIGN_CENTER)
+        -- Glow
+        draw.SimpleText(titleText, "AA_End_Title_Glow", cx, titleY, Color(255, 200, 80, 100 * titleAlpha), TEXT_ALIGN_CENTER)
         
-        -- Sparkles
-        for i = 1, 8 do
-            local angle = (i / 8) * math.pi * 2 + t
-            local dist = 200 + math.sin(t * 3 + i) * 30
-            local sx = cx + math.cos(angle) * dist
-            local sy = titleY + math.sin(angle) * 30
-            local size = 4 + math.sin(t * 5 + i) * 2
-            
-            surface.SetDrawColor(255, 215, 0, 200)
-            surface.DrawRect(sx - size/2, sy - size/2, size, size)
-        end
+        -- Main text - GOLD
+        draw.SimpleText(titleText, "AA_End_Title", cx, titleY, Color(C.accentGold.r, C.accentGold.g, C.accentGold.b, 255 * titleAlpha), TEXT_ALIGN_CENTER)
+        
+        -- Highlight
+        draw.SimpleText(titleText, "AA_End_Title", cx - 1, titleY - 1, Color(255, 255, 200, 150 * titleAlpha), TEXT_ALIGN_CENTER)
     else
-        -- Defeat - HIGH CONTRAST VERSION
+        -- DEFEAT - Run Complete
         local titleText = "RUN COMPLETE"
         
-        -- Multiple shadow layers for depth
-        for i = 4, 1, -1 do
-            local offset = i * 3
-            draw.SimpleText(titleText, "AA_Title", cx + offset, titleY + offset, Color(0, 0, 0, 150), TEXT_ALIGN_CENTER)
+        -- Shadow
+        draw.SimpleText(titleText, "AA_End_Title", cx + 3, titleY + 3, Color(0, 0, 0, 200 * titleAlpha), TEXT_ALIGN_CENTER)
+        
+        -- Main text - WHITE (not blinding red)
+        draw.SimpleText(titleText, "AA_End_Title", cx, titleY, Color(C.textMain.r, C.textMain.g, C.textMain.b, 255 * titleAlpha), TEXT_ALIGN_CENTER)
+        
+        -- Subtle red underline
+        if titleAlpha > 0.5 then
+            surface.SetDrawColor(C.accentRed.r, C.accentRed.g, C.accentRed.b, 200)
+            surface.DrawRect(cx - 150, titleY + 80, 300, 3)
         end
-        
-        -- Outer glow pulse
-        local glow = math.abs(math.sin(t * 4)) * 80 + 100
-        draw.SimpleText(titleText, "AA_Title_Glow", cx, titleY, Color(255, 100, 100, glow), TEXT_ALIGN_CENTER)
-        draw.SimpleText(titleText, "AA_Title_Glow", cx, titleY, Color(255, 80, 80, glow * 0.6), TEXT_ALIGN_CENTER)
-        
-        -- Main title - BRIGHTER RED
-        draw.SimpleText(titleText, "AA_Title", cx, titleY, Color(255, 90, 90, titleAlpha), TEXT_ALIGN_CENTER)
-        
-        -- Inner highlight
-        draw.SimpleText(titleText, "AA_Title", cx, titleY - 2, Color(255, 150, 150, titleAlpha * 0.7), TEXT_ALIGN_CENTER)
     end
     
-    -- Final score section
+    -- FINAL SCORE SECTION
     local scoreY = startY + 120
-    local scoreReveal = math.max(0, (t - 0.5) * 2)
+    local scoreReveal = math.max(0, (t - 0.3) * 2)
     
     if scoreReveal > 0 then
-        draw.SimpleText("FINAL SCORE", "AA_Label", cx, scoreY, Color(150, 150, 150), TEXT_ALIGN_CENTER)
+        local scoreAlpha = math.min(scoreReveal, 1)
         
-        -- Score with counting animation
+        -- Label
+        draw.SimpleText("FINAL SCORE", "AA_End_Label", cx, scoreY, 
+            Color(C.textDim.r, C.textDim.g, C.textDim.b, 255 * scoreAlpha), TEXT_ALIGN_CENTER)
+        
+        -- Score number
         local finalScore = math.floor(data.finalScore * math.min(scoreReveal, 1))
         local scoreText = AA.Util and AA.Util.FormatScore(finalScore) or string.format("%09d", finalScore)
         
-        -- Score glow
-        if data.beaten then
-            local glow = math.abs(math.sin(t * 4)) * 30
-            draw.SimpleText(scoreText, "AA_Huge_Glow", cx, scoreY + 50, Color(255, 180, 0, 100 + glow), TEXT_ALIGN_CENTER)
-        end
+        -- Score shadow
+        draw.SimpleText(scoreText, "AA_End_Score", cx + 2, scoreY + 52, 
+            Color(0, 0, 0, 200 * scoreAlpha), TEXT_ALIGN_CENTER)
         
-        draw.SimpleText(scoreText, "AA_Huge", cx, scoreY + 50, color_white, TEXT_ALIGN_CENTER)
+        -- Score main - Gold if beaten, White if not
+        local scoreColor = data.beaten and C.accentGold or C.textMain
+        draw.SimpleText(scoreText, "AA_End_Score", cx, scoreY + 50, 
+            Color(scoreColor.r, scoreColor.g, scoreColor.b, 255 * scoreAlpha), TEXT_ALIGN_CENTER)
+        
+        -- Score underline
+        surface.SetDrawColor(C.borderLight.r, C.borderLight.g, C.borderLight.b, 150 * scoreAlpha)
+        surface.DrawRect(cx - 100, scoreY + 95, 200, 2)
     end
     
-    -- Stats grid - HIGH CONTRAST
-    local statsY = scoreY + 150
-    local statsReveal = math.max(0, (t - 1) * 1.5)
+    -- STATS GRID - Clean dark panels
+    local statsY = scoreY + 140
+    local statsReveal = math.max(0, (t - 0.8) * 1.5)
     
     local stats = {
-        { label = "TIME", value = AA.Util and AA.Util.FormatTime(data.runTime) or string.format("%02d:%02d", math.floor(data.runTime/60), data.runTime%60) },
-        { label = "KILLS", value = tostring(data.kills) },
-        { label = "ELITE KILLS", value = tostring(data.eliteKills) },
-        { label = "MAX COMBO", value = "x" .. tostring(data.highestCombo) },
+        { label = "TIME", value = AA.Util and AA.Util.FormatTime(data.runTime) or string.format("%02d:%02d", math.floor(data.runTime/60), data.runTime%60), color = C.textMain },
+        { label = "KILLS", value = tostring(data.kills), color = C.accentRed },
+        { label = "ELITE KILLS", value = tostring(data.eliteKills), color = C.accentGold },
+        { label = "MAX COMBO", value = "x" .. tostring(data.highestCombo), color = C.accentBlue },
     }
     
     for i, stat in ipairs(stats) do
         local col = (i - 1) % 2
         local row = math.floor((i - 1) / 2)
-        local x = cx - 200 + col * 400
-        local y = statsY + row * 80
+        local x = cx - 220 + col * 440
+        local y = statsY + row * 90
         
         local statReveal = math.min(math.max(0, (statsReveal - (i - 1) * 0.1) * 2), 1)
-        local statAlpha = math.floor(statReveal * 255)
+        local statAlpha = statReveal
         
         if statReveal > 0 then
-            -- Box background - LIGHTER
-            surface.SetDrawColor(35, 35, 45, statAlpha * 0.95)
-            surface.DrawRect(x - 90, y - 10, 180, 70)
+            -- Panel background
+            surface.SetDrawColor(C.bgPanel.r, C.bgPanel.g, C.bgPanel.b, 240 * statAlpha)
+            surface.DrawRect(x - 100, y, 200, 80)
             
-            -- Border - BRIGHTER
-            surface.SetDrawColor(255, 100, 100, statAlpha * 0.6)
-            surface.DrawOutlinedRect(x - 90, y - 10, 180, 70, 2)
+            -- Panel border
+            surface.SetDrawColor(C.border.r, C.border.g, C.border.b, 200 * statAlpha)
+            surface.DrawOutlinedRect(x - 100, y, 200, 80, 1)
             
-            -- Inner shadow for text pop
-            surface.SetDrawColor(0, 0, 0, statAlpha * 0.3)
-            surface.DrawRect(x - 88, y - 8, 176, 25)
+            -- Label
+            draw.SimpleText(stat.label, "AA_End_Label", x, y + 12, 
+                Color(C.textDark.r, C.textDark.g, C.textDark.b, 255 * statAlpha), TEXT_ALIGN_CENTER)
             
-            -- Label - BRIGHTER
-            draw.SimpleText(stat.label, "AA_Tiny", x, y, Color(200, 200, 200, statAlpha), TEXT_ALIGN_CENTER)
+            -- Value shadow
+            draw.SimpleText(stat.value, "AA_End_Value", x + 2, y + 47, 
+                Color(0, 0, 0, 150 * statAlpha), TEXT_ALIGN_CENTER)
             
-            -- Value with shadow for contrast
-            draw.SimpleText(stat.value, "AA_Medium", x + 2, y + 27, Color(0, 0, 0, statAlpha * 0.8), TEXT_ALIGN_CENTER)
-            draw.SimpleText(stat.value, "AA_Medium", x, y + 25, Color(255, 220, 220, statAlpha), TEXT_ALIGN_CENTER)
+            -- Value with custom color
+            draw.SimpleText(stat.value, "AA_End_Value", x, y + 45, 
+                Color(stat.color.r, stat.color.g, stat.color.b, 255 * statAlpha), TEXT_ALIGN_CENTER)
         end
     end
     
-    -- High score comparison - HIGH CONTRAST
-    local bestY = statsY + 180
-    local bestReveal = math.max(0, (t - 2) * 1.5)
+    -- PERSONAL BEST SECTION
+    local bestY = statsY + 200
+    local bestReveal = math.max(0, (t - 1.5) * 2)
     
     if bestReveal > 0 then
-        local bestAlpha = math.floor(math.min(bestReveal, 1) * 255)
-        local bestText = "PERSONAL BEST: " .. (AA.Util and AA.Util.FormatScore(data.highScore) or string.format("%09d", data.highScore))
+        local bestAlpha = math.min(bestReveal, 1)
         
-        -- Shadow
-        draw.SimpleText(bestText, "AA_Small", cx + 2, bestY + 2, Color(0, 0, 0, bestAlpha * 0.8), TEXT_ALIGN_CENTER)
-        -- Text - BRIGHTER
-        draw.SimpleText(bestText, "AA_Small", cx, bestY, Color(220, 220, 220, bestAlpha), TEXT_ALIGN_CENTER)
+        -- Divider line
+        surface.SetDrawColor(C.border.r, C.border.g, C.border.b, 100 * bestAlpha)
+        surface.DrawRect(cx - 150, bestY - 20, 300, 1)
+        
+        local bestText = "PERSONAL BEST"
+        local bestScore = AA.Util and AA.Util.FormatScore(data.highScore) or string.format("%09d", data.highScore)
+        
+        -- Label
+        draw.SimpleText(bestText, "AA_End_Label", cx, bestY, 
+            Color(C.textDim.r, C.textDim.g, C.textDim.b, 255 * bestAlpha), TEXT_ALIGN_CENTER)
+        
+        -- Best score
+        draw.SimpleText(bestScore, "AA_End_Value", cx, bestY + 25, 
+            Color(C.accentGold.r, C.accentGold.g, C.accentGold.b, 255 * bestAlpha), TEXT_ALIGN_CENTER)
     end
     
-    -- Restart button
-    local btnReveal = math.max(0, (t - 2.5) * 2)
+    -- RESTART BUTTON - Clean and visible
+    local btnReveal = math.max(0, (t - 2) * 2)
     if btnReveal > 0 then
-        self:DrawRestartButton(cx, h - 120, btnReveal)
+        self:DrawRestartButton(cx, h - 100, btnReveal)
     end
     
     -- Quick restart hint
     if t > 3 then
-        local hintAlpha = math.abs(math.sin(t * 2)) * 150 + 50
-        draw.SimpleText("Press JUMP or ATTACK to restart", "AA_Tiny", cx, h - 40, Color(100, 100, 100, hintAlpha), TEXT_ALIGN_CENTER)
+        local hintAlpha = math.abs(math.sin(t * 2)) * 100 + 100
+        draw.SimpleText("Press [JUMP] or [ATTACK] to restart", "AA_End_Small", cx, h - 35, 
+            Color(C.textDark.r, C.textDark.g, C.textDark.b, hintAlpha), TEXT_ALIGN_CENTER)
     end
 end
 
 function AA.EndScreen:DrawRestartButton(x, y, reveal)
-    local w, h = 240, 60
+    local btnW, btnH = 280, 70
     local mx, my = input.GetCursorPos()
+    local C = self.Colors
     
-    local hovered = mx >= x - w/2 and mx <= x + w/2 and my >= y and my <= y + h
-    
-    local alpha = math.floor(reveal * 255)
-    
-    -- Glow effect on hover
-    if hovered then
-        local glow = math.abs(math.sin(self.AnimTime * 8)) * 40
-        surface.SetDrawColor(220, 70, 70, (80 + glow) * reveal)
-        surface.DrawRect(x - w/2 - 8, y - 8, w + 16, h + 16)
-    end
+    local hovered = mx >= x - btnW/2 and mx <= x + btnW/2 and my >= y and my <= y + btnH
+    local alpha = math.min(reveal, 1)
     
     -- Button background
-    local bgColor = hovered and Color(220, 70, 70, alpha) or Color(180, 50, 50, alpha)
-    surface.SetDrawColor(bgColor)
-    surface.DrawRect(x - w/2, y, w, h)
-    
-    -- Shine effect
     if hovered then
-        surface.SetDrawColor(255, 100, 100, alpha * 0.5)
-        surface.DrawRect(x - w/2, y + h * 0.3, w, h * 0.4)
+        surface.SetDrawColor(80, 80, 90, 240 * alpha)
+    else
+        surface.SetDrawColor(C.bgPanelAlt.r, C.bgPanelAlt.g, C.bgPanelAlt.b, 240 * alpha)
     end
+    surface.DrawRect(x - btnW/2, y, btnW, btnH)
     
     -- Border
-    surface.SetDrawColor(255, 255, 255, alpha)
-    surface.DrawOutlinedRect(x - w/2, y, w, h, hovered and 3 or 2)
+    local borderColor = hovered and C.accentBlue or C.borderLight
+    surface.SetDrawColor(borderColor.r, borderColor.g, borderColor.b, 255 * alpha)
+    surface.DrawOutlinedRect(x - btnW/2, y, btnW, btnH, hovered and 3 or 2)
     
-    -- Text
-    local textColor = Color(255, 255, 255, alpha)
+    -- Inner glow on hover
     if hovered then
-        draw.SimpleText("RESTART", "AA_Medium_Glow", x, y + h/2, Color(255, 255, 255, alpha * 0.5), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        surface.SetDrawColor(100, 160, 255, 50 * alpha)
+        surface.DrawRect(x - btnW/2 + 3, y + 3, btnW - 6, btnH - 6)
     end
-    draw.SimpleText("RESTART", "AA_Medium", x, y + h/2, textColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    
+    -- Button text
+    local textColor = hovered and C.textMain or C.textDim
+    draw.SimpleText("RESTART RUN", "AA_End_Button", x, y + btnH/2, 
+        Color(textColor.r, textColor.g, textColor.b, 255 * alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     
     -- Click handling
-    if hovered and input.IsMouseDown(MOUSE_LEFT) and self.AnimTime > 3 then
+    if hovered and input.IsMouseDown(MOUSE_LEFT) and self.AnimTime > 2.5 then
         self:OnRestartClicked()
     end
 end
