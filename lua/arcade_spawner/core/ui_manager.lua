@@ -125,6 +125,9 @@ end)
 hook.Add("PlayerSpawn", "ArcadeSpawner_SetSpeed", function(ply)
     if not IsValid(ply) then return end
     
+    -- Only apply to real players (not bots)
+    if not ply:IsPlayer() then return end
+    
     -- Get player level for speed calculation
     local data = UIManager.GetPlayerData(ply)
     local level = data and data.level or 1
@@ -139,6 +142,27 @@ hook.Add("PlayerSpawn", "ArcadeSpawner_SetSpeed", function(ply)
         ply:SetRunSpeed(700)
         ply:SetWalkSpeed(400)
     end
+    
+    -- Give default HL2 weapons if player has none (fix for hidden/missing weapons)
+    timer.Simple(0.1, function()
+        if not IsValid(ply) then return end
+        
+        -- Check if player has any weapons
+        local hasWeapons = false
+        for _, weapon in ipairs(ply:GetWeapons()) do
+            if IsValid(weapon) then
+                hasWeapons = true
+                break
+            end
+        end
+        
+        -- If no weapons, give default loadout
+        if not hasWeapons then
+            ply:Give("weapon_crowbar")
+            ply:Give("weapon_pistol")
+            ply:GiveAmmo(54, "Pistol", true)
+        end
+    end)
 end)
 
 hook.Add("PlayerDisconnected", "ArcadeSpawner_CleanupPlayer", function(ply)
