@@ -1,5 +1,5 @@
 --[[
-    Arcade Anomaly: Base Enemy Entity (Server)
+    Lambda Arcade: Base Enemy Entity (Server)
     Enhanced Animation & AI System with Search Behavior
 --]]
 
@@ -266,7 +266,7 @@ function ENT:Unstuck()
     self:SetPos(self:GetPos() + nudge)
 end
 
--- Main NextBot behaviour loop with Enhanced AI
+-- Main NextBot behaviour loop
 function ENT:RunBehaviour()
     if not self.AIInitialized then
         self:InitializeAI()
@@ -275,49 +275,28 @@ function ENT:RunBehaviour()
     self.CurrentYaw = self:GetAngles().yaw
     self.TargetYaw = self.CurrentYaw
     
-    -- Main AI loop
+    -- Main loop - this MUST use coroutine.wait() to work properly
     while true do
         if not IsValid(self) then return end
         
-        -- Update AI think (call with colon syntax)
-        if AA.AI and AA.AI.Base and AA.AI.Base.Think then
-            AA.AI.Base.Think(AA.AI.Base, self)
-        end
+        -- Get target with LOS check
+        local target, hasLOS = self:GetTargetPlayerWithLOS()
         
-        -- Run archetype-specific AI if available
-        if self.AIClass and AA.AI and AA.AI[self.AIClass] then
-            local ai = AA.AI[self.AIClass]
-            if ai.Think then
-                ai:Think(ai, self)
-                coroutine.yield()
+        if IsValid(target) then
+            if hasLOS then
+                self.SearchState = "chasing"
+                self:ChaseTarget(target)
             else
-                -- Fallback to basic behavior
-                self:RunBasicBehavior()
+                self.SearchState = "searching"
+                self:SearchForTarget(target)
             end
         else
-            -- No specific AI, use basic behavior
-            self:RunBasicBehavior()
+            -- No target - idle
+            self.SearchState = "idle"
+            self:SetAnimState(0)
+            self.TargetSpeed = 0
+            coroutine.wait(0.5)
         end
-    end
-end
-
--- Basic fallback behavior
-function ENT:RunBasicBehavior()
-    local target, hasLOS = self:GetTargetPlayerWithLOS()
-    
-    if IsValid(target) then
-        if hasLOS then
-            self.SearchState = "chasing"
-            self:ChaseTarget(target)
-        else
-            self.SearchState = "searching"
-            self:SearchForTarget(target)
-        end
-    else
-        self.SearchState = "idle"
-        self:SetAnimState(0)
-        self.TargetSpeed = 0
-        coroutine.wait(0.5)
     end
 end
 
@@ -331,6 +310,7 @@ function ENT:ChaseTarget(target)
             -- Check if AI wants to handle attack
             if self.AIClass and AA.AI and AA.AI[self.AIClass] and AA.AI[self.AIClass].OnAttack then
                 if AA.AI[self.AIClass]:OnAttack(self, target) then
+                    coroutine.wait(0.1)
                     return
                 end
             end
@@ -343,16 +323,15 @@ function ENT:ChaseTarget(target)
             coroutine.wait(0.1)
         end
     else
-        -- Chase with navigation
+        -- Chase
         self:SetAnimState(1)
         self.TargetSpeed = self.RunSpeed
         self:SetTargetYaw(target:GetPos())
         
-        -- Use advanced navigation if available
+        -- Use navigation if available
         if AA.Navigation then
             AA.Navigation:Update(self, target:GetPos(), self.RunSpeed)
         else
-            -- Fallback direct approach
             if self.loco then
                 self.loco:Approach(target:GetPos(), self.RunSpeed)
                 self.loco:SetDesiredSpeed(self.RunSpeed)
@@ -406,7 +385,7 @@ function ENT:SearchForTarget(target)
                 -- Next point
                 self.CurrentSearchPoint = self.CurrentSearchPoint + 1
             else
-                -- Move to search point with navigation
+                -- Move to search point
                 self:SetAnimState(1)
                 self.TargetSpeed = self.MoveSpeed * 0.7 -- Walk while searching
                 self:SetTargetYaw(searchPoint)
@@ -429,7 +408,7 @@ function ENT:SearchForTarget(target)
             self.SearchStartTime = 0
         end
     else
-        -- Just lost sight, go to last known position using navigation
+        -- Just lost sight, go to last known position
         self:SetAnimState(1)
         self.TargetSpeed = self.RunSpeed
         self:SetTargetYaw(self.LastKnownTargetPos)
@@ -481,12 +460,16 @@ function ENT:GenerateSearchPoints()
 end
 
 function ENT:InitializeAI()
-    if AA and AA.AI and self.AIClass then
-        local aiClass = AA.AI[self.AIClass]
-        if aiClass and aiClass.Initialize then
-            aiClass:Initialize(self)
-        end
+    -- Initialize base AI
+    if AA.AI and AA.AI.Base and AA.AI.Base.Initialize then
+        AA.AI.Base.Initialize(AA.AI.Base, self)
     end
+    
+    -- Initialize archetype-specific AI
+    if AA.AI and self.AIClass and AA.AI[self.AIClass] and AA.AI[self.AIClass].Initialize then
+        AA.AI[self.AIClass].Initialize(AA.AI[self.AIClass], self)
+    end
+    
     self.AIInitialized = true
 end
 
@@ -667,12 +650,23 @@ function ENT:OnTakeDamage(dmg)
     
     -- Switch target if damaged by someone else
     if IsValid(attacker) and attacker:IsPlayer() and attacker ~= self.Target then
-        local distToAttacker = self:GetPos():DistToSqr(attacker:GetPos())
-        local distToCurrent = self.Target and self:GetPos():DistToSqr(self.Target:GetPos()) or math.huge
+        local myPos = self:GetPos()
+        local currentDist = math.huge
+        if IsValid(self.Target) then
+            local targetPos = self.Target:GetPos()
+            if targetPos then
+                currentDist = myPos:DistTo(targetPos)
+            end
+        end
         
-        -- Switch if attacker is closer
-        if distToAttacker < distToCurrent * 0.7 then
-            self.Target = attacker
+        local attackerPos = attacker:GetPos()
+        if attackerPos then
+            local newDist = myPos:DistTo(attackerPos)
+            
+            -- Switch if new attacker is significantly closer
+            if newDist < currentDist * 0.6 then
+                self.Target = attacker
+            end
         end
     end
     
@@ -754,10 +748,13 @@ function ENT:SpawnAmmoPickup(pos)
 end
 
 function ENT:Die(attacker)
-    -- Check if AI wants to override death
-    if self.AIClass and AA.AI and AA.AI[self.AIClass] and AA.AI[self.AIClass].OnDeath then
-        if AA.AI[self.AIClass]:OnDeath(self, attacker) then
-            return
+    -- Check if AI wants to override
+    if AA and AA.AI and self.AIClass then
+        local aiClass = AA.AI[self.AIClass]
+        if aiClass and aiClass.OnDeath then
+            if aiClass:OnDeath(self, attacker) then
+                return
+            end
         end
     end
     
