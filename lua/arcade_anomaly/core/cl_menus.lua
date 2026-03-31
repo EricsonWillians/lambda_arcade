@@ -1,23 +1,37 @@
 --[[
-    Arcade Anomaly: Enhanced Menus
-    Modern animated UI with arcade aesthetics
+    Arcade Anomaly: ULTRA Enhanced Menus
+    Modern UX with dark gothic theme, consistent with end screen
 --]]
 
 AA.Menus = AA.Menus or {}
 AA.Menus.ActivePanel = nil
 AA.Menus.MenuAlpha = 0
 AA.Menus.Particles = {}
+AA.Menus.Colors = {
+    bgDark      = Color(8, 8, 12),
+    bgPanel     = Color(20, 20, 28),
+    bgPanelAlt  = Color(28, 28, 38),
+    border      = Color(60, 60, 70),
+    borderLight = Color(80, 160, 255),
+    textMain    = Color(255, 255, 255),
+    textDim     = Color(180, 180, 190),
+    textDark    = Color(120, 120, 130),
+    accentRed   = Color(220, 60, 60),
+    accentGold  = Color(255, 200, 80),
+    accentBlue  = Color(80, 160, 255),
+    accentGreen = Color(80, 200, 120),
+}
 
 -- Create background particles for menu
 function AA.Menus:CreateParticles()
     self.Particles = {}
-    for i = 1, 30 do
+    for i = 1, 40 do
         table.insert(self.Particles, {
             x = math.random(0, ScrW()),
             y = math.random(0, ScrH()),
-            size = math.random(2, 6),
-            speed = math.random(20, 60),
-            alpha = math.random(50, 150),
+            size = math.random(1, 4),
+            speed = math.random(15, 40),
+            alpha = math.random(30, 80),
         })
     end
 end
@@ -28,6 +42,7 @@ function AA.Menus:DrawParticles()
     end
     
     local w, h = ScrW(), ScrH()
+    local C = self.Colors
     
     for _, p in ipairs(self.Particles) do
         p.y = p.y - p.speed * FrameTime()
@@ -36,18 +51,19 @@ function AA.Menus:DrawParticles()
             p.x = math.random(0, w)
         end
         
-        surface.SetDrawColor(200, 50, 50, p.alpha)
+        surface.SetDrawColor(C.accentRed.r, C.accentRed.g, C.accentRed.b, p.alpha)
         surface.DrawRect(p.x, p.y, p.size, p.size)
     end
 end
 
--- Main Start Menu
+-- Main Start Menu - Enhanced UX
 function AA.Menus:ShowStartMenu()
     -- Close any existing menu
     if IsValid(self.ActivePanel) then
         self.ActivePanel:Remove()
     end
     
+    local C = self.Colors
     local frame = vgui.Create("DFrame")
     self.ActivePanel = frame
     
@@ -64,14 +80,15 @@ function AA.Menus:ShowStartMenu()
     
     frame.Paint = function(self, w, h)
         self.AnimTime = self.AnimTime + FrameTime()
+        local t = self.AnimTime
         
-        -- Dark background with gradient
-        surface.SetDrawColor(5, 5, 8, 250)
+        -- Solid dark background
+        surface.SetDrawColor(C.bgDark)
         surface.DrawRect(0, 0, w, h)
         
-        -- Grid pattern
-        surface.SetDrawColor(30, 30, 40, 100)
-        local gridSize = 40
+        -- Subtle grid pattern
+        surface.SetDrawColor(25, 25, 35, 100)
+        local gridSize = 50
         for x = 0, w, gridSize do
             surface.DrawLine(x, 0, x, h)
         end
@@ -82,124 +99,142 @@ function AA.Menus:ShowStartMenu()
         -- Particles
         AA.Menus:DrawParticles()
         
-        -- Scanline effect
-        local scanY = (self.AnimTime * 100) % h
-        surface.SetDrawColor(255, 100, 100, 10)
-        surface.DrawRect(0, scanY, w, 2)
-        
         -- Vignette
-        surface.SetDrawColor(0, 0, 0, 200)
-        surface.DrawRect(0, 0, w, h * 0.15)
-        surface.DrawRect(0, h * 0.85, w, h * 0.15)
-        
-        -- Title glow animation
-        local glow = math.abs(math.sin(self.AnimTime * 2)) * 50
-        
-        -- Main title
-        draw.SimpleText("LAMBDA ARCADE", "AA_Title_Glow", w/2, h * 0.2, Color(200, 50, 50, 100 + glow), TEXT_ALIGN_CENTER)
-        draw.SimpleText("LAMBDA ARCADE", "AA_Title", w/2, h * 0.2, Color(220, 60, 60), TEXT_ALIGN_CENTER)
-        
-        -- Subtitle with typewriter effect
-        local subtitle = "ENDLESS COMBAT"
-        local revealChars = math.min(#subtitle, math.floor(self.AnimTime * 15))
-        local revealed = string.sub(subtitle, 1, revealChars)
-        draw.SimpleText(revealed, "AA_Subtitle", w/2, h * 0.28, Color(150, 150, 150), TEXT_ALIGN_CENTER)
-        
-        -- Cursor blink
-        if revealChars < #subtitle and math.floor(self.AnimTime * 3) % 2 == 0 then
-            draw.SimpleText("_", "AA_Subtitle", w/2 + surface.GetTextSize(revealed, "AA_Subtitle")/2, h * 0.28, Color(200, 50, 50), TEXT_ALIGN_CENTER)
+        for i = 1, 4 do
+            surface.SetDrawColor(0, 0, 0, 40 - i * 8)
+            surface.DrawRect(0, 0, w, h * 0.08 * i)
+            surface.DrawRect(0, h * (1 - 0.08 * i), w, h * 0.08 * i)
         end
         
-        -- Decorative lines
-        surface.SetDrawColor(200, 50, 50, 200)
-        surface.DrawRect(w/2 - 200, h * 0.35, 400, 2)
+        -- Title section
+        local titleY = h * 0.15
         
-        -- Instructions at bottom
-        draw.SimpleText("Press Q for menu | Mouse to select", "AA_Tiny", w/2, h - 30, Color(100, 100, 100), TEXT_ALIGN_CENTER)
+        -- Main title with glow
+        local glow = math.abs(math.sin(t * 1.5)) * 30
+        draw.SimpleText("LAMBDA ARCADE", "AA_Title_Glow", w/2 + 2, titleY + 2, Color(0, 0, 0, 150), TEXT_ALIGN_CENTER)
+        draw.SimpleText("LAMBDA ARCADE", "AA_Title_Glow", w/2, titleY, Color(C.accentRed.r, C.accentRed.g, C.accentRed.b, 80 + glow), TEXT_ALIGN_CENTER)
+        draw.SimpleText("LAMBDA ARCADE", "AA_Title", w/2, titleY, C.textMain, TEXT_ALIGN_CENTER)
+        
+        -- Subtitle
+        draw.SimpleText("ENDLESS ARCADE COMBAT", "AA_Subtitle", w/2, titleY + 70, C.textDim, TEXT_ALIGN_CENTER)
+        
+        -- Decorative line
+        surface.SetDrawColor(C.accentRed.r, C.accentRed.g, C.accentRed.b, 150)
+        surface.DrawRect(w/2 - 150, titleY + 95, 300, 2)
+        
+        -- Version info
+        draw.SimpleText("v" .. (AA.Version or "1.0"), "AA_Tiny", w - 20, h - 20, C.textDark, TEXT_ALIGN_RIGHT)
     end
     
-    -- Start Button
+    -- Button configuration
+    local btnWidth, btnHeight = 300, 65
+    local btnX = ScrW()/2 - btnWidth/2
+    local startY = ScrH() * 0.38
+    local btnSpacing = 75
+    
+    -- START BUTTON (Primary)
     local startBtn = vgui.Create("DButton", frame)
-    startBtn:SetSize(280, 70)
-    startBtn:SetPos(ScrW()/2 - 140, ScrH() * 0.42)
+    startBtn:SetSize(btnWidth, btnHeight)
+    startBtn:SetPos(btnX, startY)
     startBtn:SetText("")
-    startBtn:SetFont("AA_Medium")
-    startBtn:SetTextColor(color_white)
     
     startBtn.Paint = function(self, w, h)
         local hover = self:IsHovered()
         local time = frame.AnimTime
         
-        -- Glow effect
+        -- Glow on hover
         if hover then
-            local glow = math.abs(math.sin(time * 8)) * 30
-            surface.SetDrawColor(220, 70, 70, 50 + glow)
-            surface.DrawRect(-5, -5, w + 10, h + 10)
+            local glow = math.abs(math.sin(time * 6)) * 20
+            surface.SetDrawColor(C.accentRed.r, C.accentRed.g, C.accentRed.b, 40 + glow)
+            surface.DrawRect(-4, -4, w + 8, h + 8)
         end
         
         -- Background
-        local bgColor = hover and Color(220, 70, 70) or Color(180, 50, 50)
+        local bgColor = hover and Color(200, 60, 60) or C.accentRed
         surface.SetDrawColor(bgColor)
         surface.DrawRect(0, 0, w, h)
         
-        -- Shine effect
+        -- Inner shine on hover
         if hover then
-            surface.SetDrawColor(255, 100, 100, 100)
-            surface.DrawRect(0, h * 0.3, w, h * 0.4)
+            surface.SetDrawColor(255, 120, 120, 80)
+            surface.DrawRect(0, h * 0.35, w, h * 0.3)
         end
         
         -- Border
-        surface.SetDrawColor(255, 255, 255, hover and 200 or 100)
-        surface.DrawOutlinedRect(0, 0, w, h, hover and 3 or 2)
+        surface.SetDrawColor(255, 255, 255, hover and 200 or 120)
+        surface.DrawOutlinedRect(0, 0, w, h, hover and 2 or 1)
         
-        -- Text with glow
+        -- Text
+        local textY = h/2
         if hover then
-            draw.SimpleText("START RUN", "AA_Medium_Glow", w/2, h/2, Color(255, 255, 255, 150), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            draw.SimpleText("START RUN", "AA_Medium_Glow", w/2, textY, Color(255, 255, 255, 100), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         end
-        draw.SimpleText("START RUN", "AA_Medium", w/2, h/2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        draw.SimpleText("START RUN", "AA_Medium", w/2, textY, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     end
     
     startBtn.DoClick = function()
         surface.PlaySound("buttons/button14.wav")
-        
-        -- Show feedback that request is being sent
         AA.Toast:Info("Starting run...", 2)
-        
-        -- Disable button temporarily
         startBtn:SetEnabled(false)
-        
-        -- Send request
         AA.Net.RequestStartRun()
-        
-        -- Close menu after brief delay
         timer.Simple(0.3, function()
-            if IsValid(frame) then
-                frame:Close()
-            end
+            if IsValid(frame) then frame:Close() end
         end)
     end
     
-    -- Secondary buttons container
-    local btnY = ScrH() * 0.55
-    local btnSpacing = 55
+    -- HOW TO PLAY BUTTON
+    local helpBtn = vgui.Create("DButton", frame)
+    helpBtn:SetSize(220, 50)
+    helpBtn:SetPos(ScrW()/2 - 110, startY + btnSpacing)
+    helpBtn:SetText("")
     
-    -- Test Spawn Button
+    helpBtn.Paint = function(self, w, h)
+        local hover = self:IsHovered()
+        surface.SetDrawColor(hover and C.bgPanelAlt or C.bgPanel)
+        surface.DrawRect(0, 0, w, h)
+        surface.SetDrawColor(hover and C.borderLight or C.border)
+        surface.DrawOutlinedRect(0, 0, w, h, 1)
+        draw.SimpleText("HOW TO PLAY", "AA_Small", w/2, h/2, hover and C.textMain or C.textDim, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    end
+    
+    helpBtn.DoClick = function()
+        surface.PlaySound("buttons/button9.wav")
+        AA.Menus:ShowHelp(frame)
+    end
+    
+    -- KEY BINDINGS BUTTON
+    local bindsBtn = vgui.Create("DButton", frame)
+    bindsBtn:SetSize(220, 50)
+    bindsBtn:SetPos(ScrW()/2 - 110, startY + btnSpacing * 1.7)
+    bindsBtn:SetText("")
+    
+    bindsBtn.Paint = function(self, w, h)
+        local hover = self:IsHovered()
+        surface.SetDrawColor(hover and C.bgPanelAlt or C.bgPanel)
+        surface.DrawRect(0, 0, w, h)
+        surface.SetDrawColor(hover and C.borderLight or C.border)
+        surface.DrawOutlinedRect(0, 0, w, h, 1)
+        draw.SimpleText("CONTROLS", "AA_Small", w/2, h/2, hover and C.textMain or C.textDim, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    end
+    
+    bindsBtn.DoClick = function()
+        surface.PlaySound("buttons/button9.wav")
+        AA.Menus:ShowControls(frame)
+    end
+    
+    -- TEST SPAWN BUTTON
     local testBtn = vgui.Create("DButton", frame)
-    testBtn:SetSize(220, 45)
-    testBtn:SetPos(ScrW()/2 - 110, btnY)
+    testBtn:SetSize(180, 40)
+    testBtn:SetPos(ScrW()/2 - 90, startY + btnSpacing * 2.5)
     testBtn:SetText("")
     
     testBtn.Paint = function(self, w, h)
         local hover = self:IsHovered()
-        local bgColor = hover and Color(70, 70, 80) or Color(50, 50, 60)
-        
-        surface.SetDrawColor(bgColor)
+        surface.SetDrawColor(40, 40, 50)
         surface.DrawRect(0, 0, w, h)
-        
-        surface.SetDrawColor(150, 150, 150, hover and 200 or 100)
+        surface.SetDrawColor(80, 80, 90, hover and 150 or 80)
         surface.DrawOutlinedRect(0, 0, w, h, 1)
-        
-        draw.SimpleText("TEST SPAWN", "AA_Small", w/2, h/2, hover and color_white or Color(180, 180, 180), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        draw.SimpleText("TEST SPAWN", "AA_Tiny", w/2, h/2, hover and C.textDim or C.textDark, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     end
     
     testBtn.DoClick = function()
@@ -208,198 +243,343 @@ function AA.Menus:ShowStartMenu()
         frame:Close()
     end
     
-    -- How to Play Button
-    local helpBtn = vgui.Create("DButton", frame)
-    helpBtn:SetSize(220, 45)
-    helpBtn:SetPos(ScrW()/2 - 110, btnY + btnSpacing)
-    helpBtn:SetText("")
-    
-    helpBtn.Paint = function(self, w, h)
-        local hover = self:IsHovered()
-        local bgColor = hover and Color(70, 70, 80) or Color(50, 50, 60)
-        
-        surface.SetDrawColor(bgColor)
-        surface.DrawRect(0, 0, w, h)
-        
-        surface.SetDrawColor(150, 150, 150, hover and 200 or 100)
-        surface.DrawOutlinedRect(0, 0, w, h, 1)
-        
-        draw.SimpleText("HOW TO PLAY", "AA_Small", w/2, h/2, hover and color_white or Color(180, 180, 180), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-    end
-    
-    helpBtn.DoClick = function()
-        surface.PlaySound("buttons/button9.wav")
-        AA.Menus:ShowHelp(frame)
-    end
-    
-    -- Close Button
+    -- CLOSE BUTTON
     local closeBtn = vgui.Create("DButton", frame)
-    closeBtn:SetSize(150, 35)
-    closeBtn:SetPos(ScrW()/2 - 75, btnY + btnSpacing * 2)
+    closeBtn:SetSize(120, 35)
+    closeBtn:SetPos(ScrW()/2 - 60, startY + btnSpacing * 3.2)
     closeBtn:SetText("")
     
     closeBtn.Paint = function(self, w, h)
         local hover = self:IsHovered()
-        
-        surface.SetDrawColor(40, 40, 45)
+        surface.SetDrawColor(35, 35, 40)
         surface.DrawRect(0, 0, w, h)
-        
-        surface.SetDrawColor(100, 100, 100, hover and 150 or 80)
+        surface.SetDrawColor(80, 80, 90, hover and 120 or 60)
         surface.DrawOutlinedRect(0, 0, w, h, 1)
-        
-        draw.SimpleText("CLOSE", "AA_Tiny", w/2, h/2, hover and Color(200, 200, 200) or Color(120, 120, 120), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        draw.SimpleText("CLOSE", "AA_Tiny", w/2, h/2, hover and Color(200, 200, 200) or C.textDark, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     end
     
     closeBtn.DoClick = function()
         surface.PlaySound("buttons/button6.wav")
         frame:Close()
     end
+    
+    -- Quick tips at bottom
+    local tipPanel = vgui.Create("DPanel", frame)
+    tipPanel:SetSize(400, 40)
+    tipPanel:SetPos(ScrW()/2 - 200, ScrH() - 60)
+    tipPanel.Paint = function(self, w, h)
+        -- Tip background
+        surface.SetDrawColor(C.bgPanel.r, C.bgPanel.g, C.bgPanel.b, 200)
+        surface.DrawRect(0, 0, w, h)
+        surface.SetDrawColor(C.border.r, C.border.g, C.border.b, 100)
+        surface.DrawOutlinedRect(0, 0, w, h, 1)
+        
+        -- Rotating tips
+        local tips = {
+            "Tip: Build combos to multiply your score",
+            "Tip: Elite enemies drop bonus points",
+            "Tip: Press Q anytime to open this menu",
+            "Tip: Dodge shooter projectiles for survival",
+            "Tip: Use your speed boost to escape hordes",
+        }
+        local tipIndex = math.floor(frame.AnimTime / 4) % #tips + 1
+        draw.SimpleText(tips[tipIndex], "AA_Tiny", w/2, h/2, C.textDim, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    end
 end
 
--- Help/Instructions Panel
+-- Enhanced Help/Instructions Panel
 function AA.Menus:ShowHelp(parent)
+    local C = self.Colors
     local frame = vgui.Create("DFrame")
-    frame:SetSize(600, 500)
+    frame:SetSize(700, 600)
     frame:Center()
     frame:SetTitle("")
     frame:ShowCloseButton(false)
     frame:MakePopup()
-    frame:SetDraggable(false)
+    frame:SetDraggable(true)
     
     if IsValid(parent) then
         parent:SetVisible(false)
         frame.OnClose = function() parent:SetVisible(true) end
     end
     
-    frame.AnimTime = 0
     frame.Paint = function(self, w, h)
-        self.AnimTime = self.AnimTime + FrameTime()
-        
         -- Background
-        surface.SetDrawColor(10, 10, 12, 245)
+        surface.SetDrawColor(C.bgDark)
         surface.DrawRect(0, 0, w, h)
         
         -- Border
-        surface.SetDrawColor(200, 50, 50, 200)
+        surface.SetDrawColor(C.border.r, C.border.g, C.border.b, 200)
         surface.DrawOutlinedRect(0, 0, w, h, 2)
         
-        -- Title
-        draw.SimpleText("HOW TO PLAY", "AA_Large", w/2, 30, Color(220, 60, 60), TEXT_ALIGN_CENTER)
+        -- Header bar
+        surface.SetDrawColor(C.bgPanel)
+        surface.DrawRect(0, 0, w, 60)
+        surface.SetDrawColor(C.border.r, C.border.g, C.border.b, 100)
+        surface.DrawRect(0, 60, w, 1)
         
-        -- Decorative line
-        surface.SetDrawColor(200, 50, 50, 150)
-        surface.DrawRect(w/2 - 150, 85, 300, 2)
+        -- Title
+        draw.SimpleText("HOW TO PLAY", "AA_Large", w/2, 30, C.accentRed, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     end
     
-    -- Content panel
-    local scroll = vgui.Create("DScrollPanel", frame)
-    scroll:SetSize(560, 380)
-    scroll:SetPos(20, 100)
+    -- Tab panel for organization
+    local sheet = vgui.Create("DPropertySheet", frame)
+    sheet:SetPos(10, 70)
+    sheet:SetSize(680, 480)
     
-    local content = [[
-        <html>
-        <head>
-            <style>
-                body { 
-                    background: transparent; 
-                    color: #ddd; 
-                    font-family: 'Roboto', Arial, sans-serif; 
-                    padding: 10px;
-                    line-height: 1.6;
-                }
-                h1 { 
-                    color: #dc3232; 
-                    font-size: 24px;
-                    border-bottom: 2px solid #dc3232;
-                    padding-bottom: 10px;
-                    margin-bottom: 20px;
-                }
-                h2 { 
-                    color: #ffb400; 
-                    font-size: 18px;
-                    margin-top: 25px;
-                }
-                .enemy { 
-                    margin: 15px 0; 
-                    padding: 15px; 
-                    background: rgba(40, 40, 50, 0.8); 
-                    border-left: 3px solid #dc3232;
-                }
-                .enemy b {
-                    color: #ffb400;
-                    font-size: 16px;
-                }
-                .cmd { 
-                    color: #888; 
-                    font-family: monospace; 
-                    background: rgba(60, 60, 70, 0.8); 
-                    padding: 3px 8px;
-                    border-radius: 3px;
-                }
-                .tip {
-                    background: rgba(255, 180, 0, 0.1);
-                    border: 1px solid rgba(255, 180, 0, 0.3);
-                    padding: 15px;
-                    margin: 20px 0;
-                    border-radius: 5px;
-                }
-                ul {
-                    margin: 10px 0;
-                    padding-left: 25px;
-                }
-                li {
-                    margin: 8px 0;
-                }
-            </style>
-        </head>
-        <body>
-            <h1>LAMBDA ARCADE</h1>
-            <p>Survive against endless waves of procedurally spawned enemies. Build combos to multiply your score and compete for the high score!</p>
-            
-            <h2>Controls</h2>
-            <ul>
-                <li>Type <span class="cmd">aa_menu</span> or press <span class="cmd">Q</span> to open the menu</li>
-                <li>Type <span class="cmd">aa_start</span> to start a run</li>
-                <li>Type <span class="cmd">aa_force_spawn [1-6]</span> to spawn test enemies</li>
-            </ul>
-            
-            <h2>Enemy Types</h2>
-            <div class="enemy"><b>Chaser (1)</b><br>Basic melee enemy. Moderate speed and health. The standard threat.</div>
-            <div class="enemy"><b>Rusher (2)</b><br>Fast enemy with burst speed ability. Closes distance quickly.</div>
-            <div class="enemy"><b>Brute (3)</b><br>Slow but powerful. High health and damage. Prioritize these.</div>
-            <div class="enemy"><b>Shooter (4)</b><br>Ranged enemy. Maintains distance and fires projectiles.</div>
-            <div class="enemy"><b>Exploder (5)</b><br>Explodes on death or contact. Keep your distance!</div>
-            <div class="enemy"><b>Elite (6)</b><br>Enhanced enemy with special abilities and bonus points.</div>
-            
-            <div class="tip">
-                <b>💀 Pro Tip:</b> Elite enemies drop bonus points and have a chance to spawn special loot. Risk vs reward!
-            </div>
-            
-            <h2>Scoring</h2>
-            <ul>
-                <li>Kill enemies to build combo</li>
-                <li>Higher combos multiply your score</li>
-                <li>Elite kills give bonus points</li>
-                <li>Survival time adds to score</li>
-                <li>Breaking your personal best unlocks bragging rights</li>
-            </ul>
-        </body>
-        </html>
-    ]]
+    -- Style the tabs
+    sheet.Paint = function(self, w, h)
+        surface.SetDrawColor(C.bgPanel)
+        surface.DrawRect(0, 20, w, h - 20)
+    end
     
-    local html = vgui.Create("DHTML", scroll)
-    html:Dock(FILL)
-    html:SetHTML(content)
+    -- OVERVIEW TAB
+    local overview = vgui.Create("DPanel")
+    overview.Paint = function() end
+    
+    local overviewText = vgui.Create("DLabel", overview)
+    overviewText:SetPos(20, 20)
+    overviewText:SetSize(640, 400)
+    overviewText:SetFont("AA_Small")
+    overviewText:SetTextColor(C.textDim)
+    overviewText:SetWrap(true)
+    overviewText:SetText([[Welcome to Lambda Arcade - an endless survival combat experience.
+
+OBJECTIVE:
+Survive against endless waves of procedurally spawned enemies. Build combos to multiply your score and compete for the high score!
+
+GAME FLOW:
+1. Start a run from this menu
+2. Enemies spawn in waves of increasing difficulty
+3. Kill enemies to build combo multipliers
+4. Survive as long as possible
+5. Beat your personal best!
+
+The game features 6 different enemy archetypes, each with unique behaviors and threats. Learning their patterns is key to survival.
+
+Good luck, survivor.]])
+    
+    sheet:AddSheet("Overview", overview, "icon16/information.png")
+    
+    -- ENEMIES TAB
+    local enemies = vgui.Create("DPanel")
+    enemies.Paint = function() end
+    
+    local enemyList = vgui.Create("DScrollPanel", enemies)
+    enemyList:SetPos(10, 10)
+    enemyList:SetSize(660, 420)
+    enemyList.Paint = function() end
+    
+    local enemyData = {
+        {name = "CHASER", icon = "●", color = C.textDim, desc = "Basic melee enemy. Moderate speed and health. Standard cannon fodder.", threat = "Low"},
+        {name = "RUSHER", icon = "▲", color = C.accentGold, desc = "Fast enemy with burst speed. Closes distance quickly. Prioritize these.", threat = "Medium"},
+        {name = "BRUTE", icon = "■", color = C.accentRed, desc = "Slow but powerful tank. High health and damage. Keep distance.", threat = "High"},
+        {name = "SHOOTER", icon = "◆", color = C.accentBlue, desc = "Ranged enemy with projectiles. Watch for the charge-up glow.", threat = "Medium"},
+        {name = "EXPLODER", icon = "★", color = Color(255, 100, 0), desc = "Explodes on death or contact. Maintain distance at all costs!", threat = "High"},
+        {name = "ELITE", icon = "✦", color = Color(200, 50, 255), desc = "Enhanced enemy with special abilities. Drops bonus points and loot.", threat = "Very High"},
+    }
+    
+    for i, enemy in ipairs(enemyData) do
+        local y = (i - 1) * 70
+        local panel = vgui.Create("DPanel", enemyList)
+        panel:SetPos(0, y)
+        panel:SetSize(640, 65)
+        panel.Paint = function(self, w, h)
+            -- Background
+            surface.SetDrawColor(C.bgPanelAlt)
+            surface.DrawRect(0, 0, w, h)
+            
+            -- Left accent bar
+            surface.SetDrawColor(enemy.color)
+            surface.DrawRect(0, 0, 4, h)
+            
+            -- Border
+            surface.SetDrawColor(C.border)
+            surface.DrawOutlinedRect(0, 0, w, h, 1)
+        end
+        
+        local icon = vgui.Create("DLabel", panel)
+        icon:SetPos(15, 10)
+        icon:SetSize(30, 30)
+        icon:SetFont("AA_Medium")
+        icon:SetTextColor(enemy.color)
+        icon:SetText(enemy.icon)
+        
+        local name = vgui.Create("DLabel", panel)
+        name:SetPos(50, 8)
+        name:SetSize(150, 25)
+        name:SetFont("AA_Small")
+        name:SetTextColor(enemy.color)
+        name:SetText(enemy.name)
+        
+        local threat = vgui.Create("DLabel", panel)
+        threat:SetPos(200, 10)
+        threat:SetSize(100, 20)
+        threat:SetFont("AA_Tiny")
+        threat:SetTextColor(enemy.color)
+        threat:SetText("Threat: " .. enemy.threat)
+        
+        local desc = vgui.Create("DLabel", panel)
+        desc:SetPos(50, 32)
+        desc:SetSize(580, 30)
+        desc:SetFont("AA_Tiny")
+        desc:SetTextColor(C.textDim)
+        desc:SetText(enemy.desc)
+    end
+    
+    sheet:AddSheet("Enemies", enemies, "icon16/user_suit.png")
+    
+    -- SCORING TAB
+    local scoring = vgui.Create("DPanel")
+    scoring.Paint = function() end
+    
+    local scoreText = vgui.Create("DLabel", scoring)
+    scoreText:SetPos(20, 20)
+    scoreText:SetSize(640, 400)
+    scoreText:SetFont("AA_Small")
+    scoreText:SetTextColor(C.textDim)
+    scoreText:SetWrap(true)
+    scoreText:SetText([[SCORING SYSTEM:
+
+• Base Points: Each kill awards points based on enemy type
+• Combo Multiplier: Build combo by killing enemies quickly
+  - 5+ combo: 1.5x multiplier
+  - 10+ combo: 2.0x multiplier  
+  - 20+ combo: 3.0x multiplier
+  - 50+ combo: 5.0x multiplier
+
+• Elite Bonus: Elite kills grant +50% bonus points
+• Survival Bonus: Points awarded every 30 seconds survived
+
+COMBO SYSTEM:
+Your combo timer resets after 2.5 seconds without a kill. Keep the pressure on to maintain high multipliers!
+
+ENEMY POINT VALUES:
+• Chaser: 100 points
+• Rusher: 150 points
+• Brute: 300 points
+• Shooter: 200 points
+• Exploder: 250 points
+• Elite: 1000 points (500 bonus)
+
+PERSONAL BEST:
+Beat your high score to unlock recognition on the end screen.]])
+    
+    sheet:AddSheet("Scoring", scoring, "icon16/coins.png")
     
     -- Back button
     local backBtn = vgui.Create("DButton", frame)
-    backBtn:SetSize(120, 35)
-    backBtn:SetPos(240, 445)
+    backBtn:SetSize(140, 40)
+    backBtn:SetPos(280, 555)
     backBtn:SetText("")
     
     backBtn.Paint = function(self, w, h)
         local hover = self:IsHovered()
-        surface.SetDrawColor(hover and Color(200, 50, 50) or Color(150, 40, 40))
+        surface.SetDrawColor(hover and C.accentRed or Color(150, 40, 40))
+        surface.DrawRect(0, 0, w, h)
+        surface.SetDrawColor(255, 255, 255, hover and 200 or 100)
+        surface.DrawOutlinedRect(0, 0, w, h, 1)
+        draw.SimpleText("BACK", "AA_Small", w/2, h/2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    end
+    
+    backBtn.DoClick = function()
+        surface.PlaySound("buttons/button6.wav")
+        frame:Close()
+    end
+end
+
+-- Controls/Bindings Panel
+function AA.Menus:ShowControls(parent)
+    local C = self.Colors
+    local frame = vgui.Create("DFrame")
+    frame:SetSize(500, 450)
+    frame:Center()
+    frame:SetTitle("")
+    frame:ShowCloseButton(false)
+    frame:MakePopup()
+    frame:SetDraggable(true)
+    
+    if IsValid(parent) then
+        parent:SetVisible(false)
+        frame.OnClose = function() parent:SetVisible(true) end
+    end
+    
+    frame.Paint = function(self, w, h)
+        surface.SetDrawColor(C.bgDark)
+        surface.DrawRect(0, 0, w, h)
+        surface.SetDrawColor(C.border.r, C.border.g, C.border.b, 200)
+        surface.DrawOutlinedRect(0, 0, w, h, 2)
+        
+        -- Header
+        surface.SetDrawColor(C.bgPanel)
+        surface.DrawRect(0, 0, w, 60)
+        draw.SimpleText("CONTROLS", "AA_Large", w/2, 30, C.accentBlue, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    end
+    
+    local scroll = vgui.Create("DScrollPanel", frame)
+    scroll:SetPos(20, 80)
+    scroll:SetSize(460, 300)
+    
+    local controls = {
+        {key = "W A S D", action = "Movement"},
+        {key = "SPACE", action = "Jump"},
+        {key = "MOUSE1", action = "Fire Weapon"},
+        {key = "MOUSE2", action = "Alt Fire / Zoom"},
+        {key = "R", action = "Reload"},
+        {key = "1-6", action = "Weapon Slots"},
+        {key = "Q", action = "Open Menu (when not in run)"},
+        {key = "F1", action = "Show Help"},
+        {key = "~ / Console", action = "Open Console for commands"},
+    }
+    
+    for i, ctrl in ipairs(controls) do
+        local y = (i - 1) * 35
+        local panel = vgui.Create("DPanel", scroll)
+        panel:SetPos(0, y)
+        panel:SetSize(440, 32)
+        panel.Paint = function(self, w, h)
+            -- Alternating background
+            if i % 2 == 0 then
+                surface.SetDrawColor(C.bgPanelAlt)
+                surface.DrawRect(0, 0, w, h)
+            end
+            
+            -- Key
+            surface.SetDrawColor(C.bgPanel)
+            surface.DrawRect(5, 3, 120, 26)
+            surface.SetDrawColor(C.border)
+            surface.DrawOutlinedRect(5, 3, 120, 26, 1)
+            
+            draw.SimpleText(ctrl.key, "AA_Small", 65, 16, C.accentBlue, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            draw.SimpleText(ctrl.action, "AA_Small", 140, 16, C.textDim, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+        end
+    end
+    
+    -- Console commands section
+    local cmdLabel = vgui.Create("DLabel", frame)
+    cmdLabel:SetPos(20, 390)
+    cmdLabel:SetSize(460, 20)
+    cmdLabel:SetFont("AA_Tiny")
+    cmdLabel:SetTextColor(C.textDark)
+    cmdLabel:SetText("CONSOLE COMMANDS:")
+    
+    local cmdText = vgui.Create("DLabel", frame)
+    cmdText:SetPos(20, 410)
+    cmdText:SetSize(460, 40)
+    cmdText:SetFont("AA_Tiny")
+    cmdText:SetTextColor(C.textDim)
+    cmdText:SetWrap(true)
+    cmdText:SetText("aa_start - Start a run | aa_stop - End run | aa_menu - Open menu | aa_force_spawn [1-6] - Spawn enemy")
+    
+    -- Back button
+    local backBtn = vgui.Create("DButton", frame)
+    backBtn:SetSize(120, 35)
+    backBtn:SetPos(190, 400)
+    backBtn:SetText("")
+    
+    backBtn.Paint = function(self, w, h)
+        local hover = self:IsHovered()
+        surface.SetDrawColor(hover and C.accentBlue or Color(40, 80, 150))
         surface.DrawRect(0, 0, w, h)
         draw.SimpleText("BACK", "AA_Small", w/2, h/2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     end

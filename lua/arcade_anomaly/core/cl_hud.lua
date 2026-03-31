@@ -113,6 +113,9 @@ hook.Add("HUDPaint", "AA_HUD_Main", function()
     AA.HUD:DrawThreatMeter(w, h)
     AA.HUD:DrawKillFeed(w, h)
     AA.HUD:DrawFloatingTexts(w, h)
+    AA.HUD:DrawWaveIndicator(w, h)
+    AA.HUD:DrawEnemyCount(w, h)
+    AA.HUD:DrawTips(w, h)
     
     if state == AA.Types.RunState.COUNTDOWN then
         AA.HUD:DrawCountdown(w, h)
@@ -544,7 +547,122 @@ function surface.DrawCircle(x, y, radius, segments)
     end
 end
 
+-- In-Game Tips System
+AA.HUD.Tips = {
+    CurrentTip = nil,
+    TipStartTime = 0,
+    TipDuration = 6,
+    TipCooldown = 30,
+    LastTipTime = 0,
+    
+    TipsList = {
+        {text = "Press Q to open the menu", priority = "high"},
+        {text = "Build combos for score multipliers", priority = "medium"},
+        {text = "Dodge shooter projectiles - watch for the glow", priority = "high"},
+        {text = "Elite enemies drop bonus points", priority = "medium"},
+        {text = "Use your speed to escape hordes", priority = "medium"},
+        {text = "Brutes are slow - keep your distance", priority = "medium"},
+        {text = "Exploders damage nearby enemies too", priority = "medium"},
+        {text = "Armor absorbs damage before health", priority = "low"},
+        {text = "Higher waves = harder enemies", priority = "low"},
+        {text = "Personal best scores are saved", priority = "low"},
+    }
+}
+
+function AA.HUD:DrawTips(w, h)
+    local tips = self.Tips
+    local now = CurTime()
+    
+    -- Show tip if cooldown passed and no current tip
+    if not tips.CurrentTip and now - tips.LastTipTime > tips.TipCooldown then
+        tips.CurrentTip = table.Random(tips.TipsList)
+        tips.TipStartTime = now
+        tips.LastTipTime = now
+    end
+    
+    -- Hide tip after duration
+    if tips.CurrentTip then
+        local age = now - tips.TipStartTime
+        if age > tips.TipDuration then
+            tips.CurrentTip = nil
+            return
+        end
+        
+        -- Draw tip
+        local alpha = 255
+        if age < 0.5 then
+            alpha = age * 510
+        elseif age > tips.TipDuration - 0.5 then
+            alpha = (tips.TipDuration - age) * 510
+        end
+        
+        local C = self.Colors
+        local x = w / 2
+        local y = h * 0.82
+        
+        -- Tip background
+        surface.SetDrawColor(10, 10, 15, 180 * (alpha / 255))
+        surface.DrawRect(x - 200, y - 10, 400, 35)
+        
+        -- Border
+        surface.SetDrawColor(80, 80, 90, 100 * (alpha / 255))
+        surface.DrawOutlinedRect(x - 200, y - 10, 400, 35, 1)
+        
+        -- Icon
+        draw.SimpleText("💡", "AA_Small", x - 180, y + 7, Color(255, 220, 100, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+        
+        -- Text
+        draw.SimpleText("TIP: " .. tips.CurrentTip.text, "AA_Small", x, y + 7, 
+            Color(200, 200, 200, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    end
+end
+
+-- Wave indicator
+function AA.HUD:DrawWaveIndicator(w, h)
+    local wave = self.Data.wave or 1
+    local C = self.Colors
+    local x = w * 0.12
+    local y = h * 0.12
+    
+    -- Wave box
+    surface.SetDrawColor(C.bgPanel.r, C.bgPanel.g, C.bgPanel.b, 200)
+    surface.DrawRect(x - 50, y - 10, 100, 50)
+    surface.SetDrawColor(C.border.r, C.border.g, C.border.b, 150)
+    surface.DrawOutlinedRect(x - 50, y - 10, 100, 50, 1)
+    
+    -- Labels
+    draw.SimpleText("WAVE", "AA_Tiny", x, y - 5, C.textDark, TEXT_ALIGN_CENTER)
+    draw.SimpleText(tostring(wave), "AA_Medium", x, y + 20, C.accentGold, TEXT_ALIGN_CENTER)
+end
+
+-- Enemy count indicator
+function AA.HUD:DrawEnemyCount(w, h)
+    local count = self.Data.enemyCount or 0
+    if count <= 0 then return end
+    
+    local C = self.Colors
+    local x = w * 0.12
+    local y = h * 0.20
+    
+    -- Count box
+    surface.SetDrawColor(C.bgPanel.r, C.bgPanel.g, C.bgPanel.b, 200)
+    surface.DrawRect(x - 50, y - 10, 100, 40)
+    surface.SetDrawColor(C.border.r, C.border.g, C.border.b, 150)
+    surface.DrawOutlinedRect(x - 50, y - 10, 100, 40, 1)
+    
+    -- Count
+    local color = C.textDim
+    if count > 15 then color = C.healthMed end
+    if count > 25 then color = C.healthLow end
+    
+    draw.SimpleText(count .. " ENEMIES", "AA_Tiny", x, y + 10, color, TEXT_ALIGN_CENTER)
+end
+
 -- Console commands
 concommand.Add("aa_hud_toggle", function()
     AA.HUD.Hidden = not AA.HUD.Hidden
+end)
+
+concommand.Add("aa_tip", function()
+    AA.HUD.Tips.LastTipTime = 0
 end)
