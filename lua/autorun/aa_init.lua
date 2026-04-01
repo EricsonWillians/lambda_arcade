@@ -93,6 +93,10 @@ local loadOrder = {
     -- Loot System
     {"core/sv_loot", "SERVER"},
     
+    -- Weapon Accuracy Enhancement
+    {"core/sv_weapon_accuracy", "SERVER"},
+    {"core/cl_weapon_accuracy", "CLIENT"},
+    
     -- Core Client
     {"core/cl_run_state", "CLIENT"},
     {"core/cl_hud", "CLIENT"},
