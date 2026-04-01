@@ -5,11 +5,11 @@
 
 AA.Loot = AA.Loot or {}
 
--- Health pickups
+-- Health pickups - ENHANCED AMOUNTS
 AA.Loot.HealthItems = {
-    { class = "item_healthkit", amount = 25, weight = 30 },
-    { class = "item_healthvial", amount = 10, weight = 50 },
-    { class = "item_battery", amount = 15, weight = 20 }, -- Armor as health alternative
+    { class = "item_healthkit", amount = 50, weight = 40 },   -- Doubled from 25
+    { class = "item_healthvial", amount = 25, weight = 50 },  -- Doubled from 10
+    { class = "item_battery", amount = 30, weight = 10 },     -- Armor as health alternative
 }
 
 -- Armor pickups
@@ -18,37 +18,37 @@ AA.Loot.ArmorItems = {
     { class = "item_suit", amount = 100, weight = 10 }, -- Full suit charge
 }
 
--- Ammo types with their item classes
+-- Ammo types with their item classes - ENHANCED AMOUNTS
 AA.Loot.AmmoTypes = {
-    -- Pistols
-    { class = "item_ammo_pistol", type = "Pistol", amount = 20, weight = 40 },
-    { class = "item_ammo_pistol_large", type = "Pistol", amount = 60, weight = 20 },
+    -- Pistols - GENEROUS
+    { class = "item_ammo_pistol", type = "Pistol", amount = 40, weight = 35 },       -- Doubled from 20
+    { class = "item_ammo_pistol_large", type = "Pistol", amount = 100, weight = 25 }, -- Nearly doubled
     
-    -- SMG
-    { class = "item_ammo_smg1", type = "SMG1", amount = 45, weight = 35 },
-    { class = "item_ammo_smg1_large", type = "SMG1", amount = 135, weight = 15 },
+    -- SMG - GENEROUS
+    { class = "item_ammo_smg1", type = "SMG1", amount = 90, weight = 30 },          -- Doubled from 45
+    { class = "item_ammo_smg1_large", type = "SMG1", amount = 200, weight = 20 },   -- Increased from 135
     
-    -- AR2 (Pulse Rifle)
-    { class = "item_ammo_ar2", type = "AR2", amount = 20, weight = 25 },
-    { class = "item_ammo_ar2_large", type = "AR2", amount = 60, weight = 10 },
+    -- AR2 (Pulse Rifle) - GENEROUS
+    { class = "item_ammo_ar2", type = "AR2", amount = 40, weight = 20 },            -- Doubled from 20
+    { class = "item_ammo_ar2_large", type = "AR2", amount = 100, weight = 15 },     -- Increased from 60
     
-    -- Shotgun
-    { class = "item_box_buckshot", type = "Buckshot", amount = 20, weight = 30 },
+    -- Shotgun - GENEROUS
+    { class = "item_box_buckshot", type = "Buckshot", amount = 40, weight = 35 },   -- Doubled from 20
     
     -- Crossbow
-    { class = "item_ammo_crossbow", type = "XBowBolt", amount = 6, weight = 15 },
+    { class = "item_ammo_crossbow", type = "XBowBolt", amount = 10, weight = 15 },  -- Increased from 6
     
-    -- RPG
-    { class = "item_ammo_357", type = "357", amount = 12, weight = 20 },
+    -- 357 Magnum
+    { class = "item_ammo_357", type = "357", amount = 20, weight = 20 },            -- Increased from 12
     
     -- Grenades
-    { class = "weapon_frag", type = "Grenade", amount = 1, weight = 10 },
+    { class = "weapon_frag", type = "Grenade", amount = 2, weight = 12 },           -- Now gives 2
     
     -- SMG Grenades (Alt fire)
-    { class = "item_ammo_smg1_grenade", type = "SMG1_Grenade", amount = 3, weight = 8 },
+    { class = "item_ammo_smg1_grenade", type = "SMG1_Grenade", amount = 5, weight = 10 }, -- Increased from 3
     
     -- AR2 Alt Fire (Combine Balls)
-    { class = "item_battery", type = "AR2AltFire", amount = 2, weight = 5 }, -- Using battery as proxy
+    { class = "item_ammo_ar2_altfire", type = "AR2AltFire", amount = 4, weight = 8 }, -- Proper item, increased from 2
 }
 
 -- Weapons that can be dropped
@@ -128,12 +128,12 @@ function AA.Loot:SpawnHealth(pos, amount)
         phys:AddAngleVelocity(VectorRand() * 100)
     end
     
-    -- Glow effect
+    -- Enhanced glow effect - BRIGHTER for visibility
     local light = ents.Create("light_dynamic")
     if IsValid(light) then
-        light:SetKeyValue("_light", "255 100 100 150")
-        light:SetKeyValue("brightness", "2")
-        light:SetKeyValue("distance", "128")
+        light:SetKeyValue("_light", "255 80 80 200")
+        light:SetKeyValue("brightness", "4")
+        light:SetKeyValue("distance", "200")
         light:SetPos(pos)
         light:Spawn()
         light:Fire("TurnOn", "", 0)
@@ -147,6 +147,15 @@ function AA.Loot:SpawnHealth(pos, amount)
             end
         end)
     end
+    
+    -- Spawn effect - particle burst
+    local effectData = EffectData()
+    effectData:SetOrigin(pos)
+    effectData:SetMagnitude(2)
+    util.Effect("cball_explode", effectData)
+    
+    -- Mark spawn time
+    ent.AA_SpawnTime = CurTime()
     
     return ent
 end
@@ -170,12 +179,12 @@ function AA.Loot:SpawnArmor(pos, amount)
         phys:AddAngleVelocity(VectorRand() * 100)
     end
     
-    -- Blue glow for armor
+    -- Enhanced blue glow for armor
     local light = ents.Create("light_dynamic")
     if IsValid(light) then
-        light:SetKeyValue("_light", "100 150 255 150")
-        light:SetKeyValue("brightness", "2")
-        light:SetKeyValue("distance", "128")
+        light:SetKeyValue("_light", "80 180 255 200")
+        light:SetKeyValue("brightness", "4")
+        light:SetKeyValue("distance", "200")
         light:SetPos(pos)
         light:Spawn()
         light:Fire("TurnOn", "", 0)
@@ -188,6 +197,14 @@ function AA.Loot:SpawnArmor(pos, amount)
             end
         end)
     end
+    
+    -- Spawn effect
+    local effectData = EffectData()
+    effectData:SetOrigin(pos)
+    effectData:SetMagnitude(2)
+    util.Effect("cball_explode", effectData)
+    
+    ent.AA_SpawnTime = CurTime()
     
     return ent
 end
@@ -230,12 +247,12 @@ function AA.Loot:SpawnAmmo(pos, specificType)
         phys:AddAngleVelocity(VectorRand() * 150)
     end
     
-    -- Yellow/orange glow for ammo
+    -- Enhanced yellow/orange glow for ammo
     local light = ents.Create("light_dynamic")
     if IsValid(light) then
-        light:SetKeyValue("_light", "255 200 50 150")
-        light:SetKeyValue("brightness", "2")
-        light:SetKeyValue("distance", "128")
+        light:SetKeyValue("_light", "255 180 50 200")
+        light:SetKeyValue("brightness", "4")
+        light:SetKeyValue("distance", "200")
         light:SetPos(pos)
         light:Spawn()
         light:Fire("TurnOn", "", 0)
@@ -248,6 +265,14 @@ function AA.Loot:SpawnAmmo(pos, specificType)
             end
         end)
     end
+    
+    -- Spawn effect
+    local effectData = EffectData()
+    effectData:SetOrigin(pos)
+    effectData:SetMagnitude(2)
+    util.Effect("cball_explode", effectData)
+    
+    ent.AA_SpawnTime = CurTime()
     
     return ent
 end
@@ -283,12 +308,12 @@ function AA.Loot:SpawnWeapon(pos, specificClass)
         phys:AddAngleVelocity(VectorRand() * 100)
     end
     
-    -- Green glow for weapons
+    -- Enhanced green glow for weapons
     local light = ents.Create("light_dynamic")
     if IsValid(light) then
-        light:SetKeyValue("_light", "50 255 100 150")
-        light:SetKeyValue("brightness", "3")
-        light:SetKeyValue("distance", "160")
+        light:SetKeyValue("_light", "50 255 100 200")
+        light:SetKeyValue("brightness", "5")
+        light:SetKeyValue("distance", "250")
         light:SetPos(pos)
         light:Spawn()
         light:Fire("TurnOn", "", 0)
@@ -302,10 +327,25 @@ function AA.Loot:SpawnWeapon(pos, specificClass)
         end)
     end
     
+    -- Spawn effect
+    local effectData = EffectData()
+    effectData:SetOrigin(pos)
+    effectData:SetMagnitude(3)
+    util.Effect("cball_explode", effectData)
+    
+    -- Weapon pickup notification effect
+    local sparkData = EffectData()
+    sparkData:SetOrigin(pos)
+    sparkData:SetMagnitude(2)
+    sparkData:SetScale(2)
+    util.Effect("Sparks", sparkData)
+    
+    ent.AA_SpawnTime = CurTime()
+    
     return ent
 end
 
--- Main drop function called on enemy death
+-- Main drop function called on enemy death - SEVERELY ENHANCED
 function AA.Loot:DropFromEnemy(enemy, attacker)
     if not IsValid(enemy) then return end
     
@@ -313,51 +353,82 @@ function AA.Loot:DropFromEnemy(enemy, attacker)
     local archetype = enemy.Archetype or 1
     local isElite = enemy.IsElite or false
     
-    -- Calculate drop chance based on enemy type
-    local dropChance = 0.25 -- Base 25%
+    -- ALWAYS drop something (guaranteed drops)
+    local numDrops = 1
     
-    if archetype == 3 then dropChance = 0.45 -- Brutes drop more
-    elseif archetype == 6 then dropChance = 0.70 -- Elites drop even more
-    elseif isElite then dropChance = 0.60
+    -- Determine number of drops based on enemy type
+    if archetype == 3 then numDrops = 2      -- Brutes drop 2 items
+    elseif archetype == 6 then numDrops = 3  -- Elites drop 3 items
+    elseif isElite then numDrops = 2
     end
     
-    -- Player luck bonus (based on combo)
+    -- Combo bonus - extra drops
     local combo = 0
-    if attacker and attacker:IsPlayer() and attacker.AA_Combo then
-        combo = attacker.AA_Combo
-        dropChance = dropChance + (combo * 0.05) -- +5% per combo
+    if attacker and attacker:IsPlayer() then
+        combo = attacker.AA_Combo or 0
+        if combo >= 5 then numDrops = numDrops + 1 end
+        if combo >= 15 then numDrops = numDrops + 1 end
     end
     
-    -- Guaranteed drop on high combos
-    if combo >= 10 then dropChance = 1.0 end
+    -- Cap max drops
+    numDrops = math.min(numDrops, 4)
     
-    -- Roll for drop
-    if math.random() > dropChance then return end
+    -- Check if attacker needs health (guaranteed health drop if low)
+    local attackerNeedsHealth = false
+    if IsValid(attacker) and attacker:IsPlayer() then
+        local healthPercent = attacker:Health() / attacker:GetMaxHealth()
+        if healthPercent < 0.5 then
+            attackerNeedsHealth = true
+        end
+    end
     
+    -- Elite special drops (supply crate replaces one drop)
+    if isElite and math.random() < 0.4 then
+        self:SpawnSupplyCrate(pos)
+        numDrops = numDrops - 1
+    end
+    
+    -- Spawn multiple drops
+    for i = 1, numDrops do
+        timer.Simple((i - 1) * 0.15, function()
+            if not IsValid(enemy) then return end
+            local dropPos = pos + Vector(math.random(-20, 20), math.random(-20, 20), 0)
+            self:SpawnSingleDrop(dropPos, attacker, archetype, isElite, attackerNeedsHealth and i == 1)
+        end)
+    end
+    
+    -- Bonus ammo drop for high combo
+    if combo >= 10 then
+        timer.Simple(numDrops * 0.15 + 0.1, function()
+            if not IsValid(enemy) then return end
+            self:SpawnAmmo(pos + Vector(math.random(-30, 30), math.random(-30, 30), 0))
+        end)
+    end
+end
+
+-- Spawn a single drop item
+function AA.Loot:SpawnSingleDrop(pos, attacker, archetype, isElite, forceHealth)
     -- Determine what type of drop
     local dropRoll = math.random(1, 100)
     
-    -- Elite special drops
-    if isElite and math.random() < 0.3 then
-        local eliteItem = self:WeightedRandom(self.EliteDrops)
-        if eliteItem.class == "item_item_crate" then
-            self:SpawnSupplyCrate(pos)
-        else
-            self:SpawnWeapon(pos, eliteItem.class)
-        end
-        return
+    -- Force health if player needs it
+    if forceHealth then
+        dropRoll = 20  -- Forces health drop
     end
     
-    -- Weighted drop types
-    if dropRoll <= 35 then -- 35% Health
-        local amount = math.random(10, 25)
-        if archetype == 3 then amount = math.random(25, 50) end
-        if isElite then amount = math.random(50, 100) end
+    -- Enhanced amounts based on enemy type
+    local multiplier = 1.0
+    if archetype == 3 then multiplier = 1.5      -- Brutes give 50% more
+    elseif archetype == 6 then multiplier = 2.0  -- Elites give double
+    elseif isElite then multiplier = 1.5
+    end
+    
+    if dropRoll <= 40 then -- 40% Health (increased from 35%)
+        local amount = math.floor(math.random(25, 50) * multiplier)
         self:SpawnHealth(pos, amount)
         
-    elseif dropRoll <= 55 then -- 20% Armor
-        local amount = math.random(15, 30)
-        if isElite then amount = math.random(40, 80) end
+    elseif dropRoll <= 55 then -- 15% Armor
+        local amount = math.floor(math.random(25, 50) * multiplier)
         self:SpawnArmor(pos, amount)
         
     elseif dropRoll <= 85 then -- 30% Ammo
@@ -385,11 +456,8 @@ function AA.Loot:DropFromEnemy(enemy, attacker)
     elseif dropRoll <= 95 then -- 10% Weapon
         self:SpawnWeapon(pos)
         
-    else -- 5% Bonus (health + ammo)
-        self:SpawnHealth(pos, 25)
-        timer.Simple(0.1, function()
-            self:SpawnAmmo(pos + Vector(10, 0, 0))
-        end)
+    else -- 5% Double Health (bonus)
+        self:SpawnHealth(pos, math.floor(50 * multiplier))
     end
 end
 
@@ -417,8 +485,8 @@ function AA.Loot:CleanupOldDrops()
     local drops = ents.FindByClass("item_*")
     local weapons = ents.FindByClass("weapon_*")
     
-    -- Remove drops that have been on ground too long (5 minutes)
-    local maxAge = 300
+    -- Remove drops that have been on ground too long (10 minutes - longer to help players)
+    local maxAge = 600
     local now = CurTime()
     
     for _, ent in ipairs(drops) do
@@ -445,4 +513,62 @@ hook.Add("Think", "AA_LootCleanup", function()
     end
 end)
 
-print("[Lambda Arcade] Enhanced Loot System initialized")
+-- Custom pickup handling for enhanced health amounts
+hook.Add("PlayerCanPickupItem", "AA_Loot_HealthPickup", function(ply, item)
+    if not IsValid(item) then return end
+    
+    -- Handle custom health amounts
+    if item.AA_HealthAmount and item.AA_HealthAmount > 0 then
+        local currentHealth = ply:Health()
+        local maxHealth = ply:GetMaxHealth()
+        
+        if currentHealth < maxHealth then
+            local newHealth = math.min(currentHealth + item.AA_HealthAmount, maxHealth)
+            ply:SetHealth(newHealth)
+            
+            -- Visual feedback
+            local effectData = EffectData()
+            effectData:SetOrigin(ply:GetPos())
+            effectData:SetMagnitude(1)
+            util.Effect("cball_bounce", effectData)
+            
+            item:Remove()
+            return false -- Block default pickup
+        end
+    end
+    
+    -- Handle custom armor amounts
+    if item.AA_ArmorAmount and item.AA_ArmorAmount > 0 then
+        local currentArmor = ply:Armor()
+        
+        if currentArmor < 100 then
+            local newArmor = math.min(currentArmor + item.AA_ArmorAmount, 100)
+            ply:SetArmor(newArmor)
+            
+            -- Visual feedback
+            local effectData = EffectData()
+            effectData:SetOrigin(ply:GetPos())
+            effectData:SetMagnitude(1)
+            util.Effect("cball_bounce", effectData)
+            
+            item:Remove()
+            return false -- Block default pickup
+        end
+    end
+    
+    -- Handle custom ammo amounts
+    if item.AA_AmmoType and item.AA_AmmoAmount and item.AA_AmmoAmount > 0 then
+        ply:GiveAmmo(item.AA_AmmoAmount, item.AA_AmmoType)
+        
+        -- Visual feedback
+        local effectData = EffectData()
+        effectData:SetOrigin(ply:GetPos())
+        effectData:SetMagnitude(1)
+        util.Effect("cball_bounce", effectData)
+        
+        item:Remove()
+        return false -- Block default pickup
+    end
+end)
+
+print("[Lambda Arcade] SEVERELY ENHANCED Loot System initialized - Generous drops enabled!")
