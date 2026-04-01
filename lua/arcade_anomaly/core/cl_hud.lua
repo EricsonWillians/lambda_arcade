@@ -41,8 +41,14 @@ AA.HUD.Colors = {
     accent = Color(0, 200, 255),           -- Cyan
     accentHot = Color(255, 100, 0),        -- Orange/Red
     gold = Color(255, 215, 0),             -- Gold
+    accentGold = Color(255, 215, 0),       -- Gold accent
     white = Color(255, 255, 255),
     black = Color(0, 0, 0),
+    border = Color(255, 255, 255, 150),    -- White border for UI elements
+    
+    -- Text colors
+    textDark = Color(80, 80, 80, 255),     -- Dark gray text
+    textDim = Color(120, 120, 120, 255),   -- Dim text
     
     -- Threat levels
     threatLow = Color(100, 255, 100),
