@@ -1,8 +1,9 @@
 --[[
     Arcade Anomaly: ULTRA HIGH CONTRAST End Screen
     
-    Dark gothic theme with excellent readability.
-    No excessive bright red - clean, sharp, professional.
+    Designed to be readable OVER GMod's default red death screen.
+    Uses CYAN/TEAL accents (opposite of red on color wheel) for contrast.
+    Solid black backgrounds completely hide the red tint.
 --]]
 
 AA.EndScreen = AA.EndScreen or {}
@@ -11,25 +12,31 @@ AA.EndScreen.Visible = false
 AA.EndScreen.AnimTime = 0
 AA.EndScreen.StatReveals = {}
 
--- Color palette for HIGH CONTRAST
+-- Color palette - OPTIMIZED FOR RED BACKGROUND
+-- GMod's death screen is bright red, so we need colors that contrast with red
 AA.EndScreen.Colors = {
-    bgDark      = Color(8, 8, 12),          -- Almost black background
-    bgPanel     = Color(20, 20, 28),        -- Dark panel
-    bgPanelAlt  = Color(25, 25, 35),        -- Slightly lighter panel
+    -- SOLID dark backgrounds - completely hide the red
+    bgDark      = Color(0, 0, 0),           -- Pure black
+    bgPanel     = Color(10, 10, 15),        -- Very dark, slight blue tint
+    bgPanelAlt  = Color(15, 15, 22),        -- Slightly lighter
     
-    textMain    = Color(255, 255, 255),     -- Pure white
-    textDim     = Color(180, 180, 190),     -- Dimmed text
-    textDark    = Color(120, 120, 130),     -- Dark text
+    -- Text: CYAN/WHITE contrasts with red background
+    textMain    = Color(220, 255, 255),     -- Cyan-tinted white (counters red)
+    textDim     = Color(160, 200, 210),     -- Dim cyan-gray
+    textDark    = Color(100, 130, 140),     -- Dark cyan-gray
     
-    accentGold  = Color(255, 200, 80),      -- Gold for high scores
-    accentRed   = Color(220, 60, 60),       -- Muted red (not blinding)
-    accentBlue  = Color(80, 160, 255),      -- Blue accent
-    accentGreen = Color(80, 200, 120),      -- Green accent
+    -- Accents: CYAN/TEAL are opposite of red on color wheel
+    accentCyan  = Color(0, 255, 255),       -- Bright cyan (high contrast on red)
+    accentTeal  = Color(0, 200, 180),       -- Teal (readable on red)
+    accentGold  = Color(255, 220, 100),     -- Yellow-gold (readable on red)
+    accentRed   = Color(255, 100, 100),     -- Light red/pink (visible on dark red)
+    accentBlue  = Color(100, 180, 255),     -- Sky blue
+    accentGreen = Color(100, 255, 180),     -- Mint green
     
-    border      = Color(60, 60, 70),        -- Subtle border
-    borderLight = Color(100, 100, 110),     -- Lighter border
+    border      = Color(0, 150, 150),       -- Cyan border (visible on red)
+    borderLight = Color(0, 200, 200),       -- Light cyan border
     
-    shadow      = Color(0, 0, 0, 220),      -- Strong shadow
+    shadow      = Color(0, 0, 0, 255),      -- Solid black shadow
 }
 
 -- Create high contrast fonts
@@ -116,16 +123,19 @@ function AA.EndScreen:Draw()
     local t = self.AnimTime
     local C = self.Colors
     
-    -- SOLID dark background (no transparency issues)
+    -- COMPLETELY SOLID black background to hide GMod's red death screen
+    -- Draw multiple layers to ensure no red bleeds through
+    surface.SetDrawColor(0, 0, 0, 255)
+    surface.DrawRect(0, 0, w, h)
     surface.SetDrawColor(C.bgDark)
     surface.DrawRect(0, 0, w, h)
     
-    -- Subtle radial gradient effect (dark vignette)
+    -- Dark vignette to blend edges
     for i = 1, 5 do
-        local alpha = 30 - i * 5
-        surface.SetDrawColor(0, 0, 0, alpha)
-        surface.DrawRect(0, 0, w, h * 0.1 * i)
-        surface.DrawRect(0, h * (1 - 0.1 * i), w, h * 0.1 * i)
+        local alpha = 40 - i * 6
+        surface.SetDrawColor(0, 0, 5, alpha)
+        surface.DrawRect(0, 0, w, h * 0.08 * i)
+        surface.DrawRect(0, h * (1 - 0.08 * i), w, h * 0.08 * i)
     end
     
     local cx = w / 2
@@ -140,29 +150,32 @@ function AA.EndScreen:Draw()
         local titleText = "NEW HIGH SCORE!"
         
         -- Shadow
-        draw.SimpleText(titleText, "AA_End_Title", cx + 3, titleY + 3, Color(0, 0, 0, 200 * titleAlpha), TEXT_ALIGN_CENTER)
+        draw.SimpleText(titleText, "AA_End_Title", cx + 3, titleY + 3, Color(0, 0, 0, 255 * titleAlpha), TEXT_ALIGN_CENTER)
+        draw.SimpleText(titleText, "AA_End_Title", cx + 4, titleY + 4, Color(0, 0, 0, 200 * titleAlpha), TEXT_ALIGN_CENTER)
         
-        -- Glow
-        draw.SimpleText(titleText, "AA_End_Title_Glow", cx, titleY, Color(255, 200, 80, 100 * titleAlpha), TEXT_ALIGN_CENTER)
+        -- Glow - CYAN (contrasts with red background)
+        draw.SimpleText(titleText, "AA_End_Title_Glow", cx, titleY, Color(0, 255, 255, 120 * titleAlpha), TEXT_ALIGN_CENTER)
         
-        -- Main text - GOLD
-        draw.SimpleText(titleText, "AA_End_Title", cx, titleY, Color(C.accentGold.r, C.accentGold.g, C.accentGold.b, 255 * titleAlpha), TEXT_ALIGN_CENTER)
+        -- Main text - CYAN-GOLD (readable on red)
+        draw.SimpleText(titleText, "AA_End_Title", cx, titleY, Color(C.accentCyan.r, C.accentCyan.g, C.accentCyan.b, 255 * titleAlpha), TEXT_ALIGN_CENTER)
         
         -- Highlight
-        draw.SimpleText(titleText, "AA_End_Title", cx - 1, titleY - 1, Color(255, 255, 200, 150 * titleAlpha), TEXT_ALIGN_CENTER)
+        draw.SimpleText(titleText, "AA_End_Title", cx - 1, titleY - 1, Color(200, 255, 255, 180 * titleAlpha), TEXT_ALIGN_CENTER)
     else
         -- DEFEAT - Run Complete
         local titleText = "RUN COMPLETE"
         
-        -- Shadow
+        -- Multiple shadows for depth over red background
+        draw.SimpleText(titleText, "AA_End_Title", cx + 4, titleY + 4, Color(0, 0, 0, 255 * titleAlpha), TEXT_ALIGN_CENTER)
         draw.SimpleText(titleText, "AA_End_Title", cx + 3, titleY + 3, Color(0, 0, 0, 200 * titleAlpha), TEXT_ALIGN_CENTER)
+        draw.SimpleText(titleText, "AA_End_Title", cx + 2, titleY + 2, Color(0, 0, 0, 150 * titleAlpha), TEXT_ALIGN_CENTER)
         
-        -- Main text - WHITE (not blinding red)
+        -- Main text - CYAN-TINTED WHITE (contrasts with red background)
         draw.SimpleText(titleText, "AA_End_Title", cx, titleY, Color(C.textMain.r, C.textMain.g, C.textMain.b, 255 * titleAlpha), TEXT_ALIGN_CENTER)
         
-        -- Subtle red underline
+        -- Cyan underline (contrasts with red)
         if titleAlpha > 0.5 then
-            surface.SetDrawColor(C.accentRed.r, C.accentRed.g, C.accentRed.b, 200)
+            surface.SetDrawColor(C.accentCyan.r, C.accentCyan.g, C.accentCyan.b, 200)
             surface.DrawRect(cx - 150, titleY + 80, 300, 3)
         end
     end
@@ -182,18 +195,20 @@ function AA.EndScreen:Draw()
         local finalScore = math.floor(data.finalScore * math.min(scoreReveal, 1))
         local scoreText = AA.Util and AA.Util.FormatScore(finalScore) or string.format("%09d", finalScore)
         
-        -- Score shadow
+        -- Score shadows - multiple for depth on red background
+        draw.SimpleText(scoreText, "AA_End_Score", cx + 4, scoreY + 54, 
+            Color(0, 0, 0, 255 * scoreAlpha), TEXT_ALIGN_CENTER)
         draw.SimpleText(scoreText, "AA_End_Score", cx + 2, scoreY + 52, 
             Color(0, 0, 0, 200 * scoreAlpha), TEXT_ALIGN_CENTER)
         
-        -- Score main - Gold if beaten, White if not
-        local scoreColor = data.beaten and C.accentGold or C.textMain
+        -- Score main - Cyan-Gold if beaten, Cyan-White if not (both contrast with red)
+        local scoreColor = data.beaten and C.accentCyan or C.textMain
         draw.SimpleText(scoreText, "AA_End_Score", cx, scoreY + 50, 
             Color(scoreColor.r, scoreColor.g, scoreColor.b, 255 * scoreAlpha), TEXT_ALIGN_CENTER)
         
-        -- Score underline
-        surface.SetDrawColor(C.borderLight.r, C.borderLight.g, C.borderLight.b, 150 * scoreAlpha)
-        surface.DrawRect(cx - 100, scoreY + 95, 200, 2)
+        -- Score underline - cyan for contrast
+        surface.SetDrawColor(C.accentCyan.r, C.accentCyan.g, C.accentCyan.b, 180 * scoreAlpha)
+        surface.DrawRect(cx - 100, scoreY + 95, 200, 3)
     end
     
     -- STATS GRID - Clean dark panels
@@ -202,9 +217,9 @@ function AA.EndScreen:Draw()
     
     local stats = {
         { label = "TIME", value = AA.Util and AA.Util.FormatTime(data.runTime) or string.format("%02d:%02d", math.floor(data.runTime/60), data.runTime%60), color = C.textMain },
-        { label = "KILLS", value = tostring(data.kills), color = C.accentRed },
+        { label = "KILLS", value = tostring(data.kills), color = C.accentCyan },      -- Cyan contrasts with red bg
         { label = "ELITE KILLS", value = tostring(data.eliteKills), color = C.accentGold },
-        { label = "MAX COMBO", value = "x" .. tostring(data.highestCombo), color = C.accentBlue },
+        { label = "MAX COMBO", value = "x" .. tostring(data.highestCombo), color = C.accentTeal },
     }
     
     for i, stat in ipairs(stats) do
@@ -217,23 +232,29 @@ function AA.EndScreen:Draw()
         local statAlpha = statReveal
         
         if statReveal > 0 then
-            -- Panel background
-            surface.SetDrawColor(C.bgPanel.r, C.bgPanel.g, C.bgPanel.b, 240 * statAlpha)
+            -- Panel background - COMPLETELY OPAQUE to hide red death screen
+            surface.SetDrawColor(C.bgPanel.r, C.bgPanel.g, C.bgPanel.b, 255)
             surface.DrawRect(x - 100, y, 200, 80)
             
-            -- Panel border
-            surface.SetDrawColor(C.border.r, C.border.g, C.border.b, 200 * statAlpha)
-            surface.DrawOutlinedRect(x - 100, y, 200, 80, 1)
+            -- Inner panel for depth
+            surface.SetDrawColor(0, 0, 0, 100)
+            surface.DrawRect(x - 95, y + 5, 190, 70)
+            
+            -- Panel border - cyan for contrast on red
+            surface.SetDrawColor(C.border.r, C.border.g, C.border.b, 255)
+            surface.DrawOutlinedRect(x - 100, y, 200, 80, 2)
             
             -- Label
             draw.SimpleText(stat.label, "AA_End_Label", x, y + 12, 
                 Color(C.textDark.r, C.textDark.g, C.textDark.b, 255 * statAlpha), TEXT_ALIGN_CENTER)
             
-            -- Value shadow
+            -- Value shadows - multiple for depth on red background
+            draw.SimpleText(stat.value, "AA_End_Value", x + 3, y + 48, 
+                Color(0, 0, 0, 255 * statAlpha), TEXT_ALIGN_CENTER)
             draw.SimpleText(stat.value, "AA_End_Value", x + 2, y + 47, 
-                Color(0, 0, 0, 150 * statAlpha), TEXT_ALIGN_CENTER)
+                Color(0, 0, 0, 200 * statAlpha), TEXT_ALIGN_CENTER)
             
-            -- Value with custom color
+            -- Value with custom color (cyan/teal for contrast)
             draw.SimpleText(stat.value, "AA_End_Value", x, y + 45, 
                 Color(stat.color.r, stat.color.g, stat.color.b, 255 * statAlpha), TEXT_ALIGN_CENTER)
         end
@@ -246,9 +267,9 @@ function AA.EndScreen:Draw()
     if bestReveal > 0 then
         local bestAlpha = math.min(bestReveal, 1)
         
-        -- Divider line
-        surface.SetDrawColor(C.border.r, C.border.g, C.border.b, 100 * bestAlpha)
-        surface.DrawRect(cx - 150, bestY - 20, 300, 1)
+        -- Divider line - cyan
+        surface.SetDrawColor(C.accentCyan.r, C.accentCyan.g, C.accentCyan.b, 150 * bestAlpha)
+        surface.DrawRect(cx - 150, bestY - 20, 300, 2)
         
         local bestText = "PERSONAL BEST"
         local bestScore = AA.Util and AA.Util.FormatScore(data.highScore) or string.format("%09d", data.highScore)
@@ -257,9 +278,9 @@ function AA.EndScreen:Draw()
         draw.SimpleText(bestText, "AA_End_Label", cx, bestY, 
             Color(C.textDim.r, C.textDim.g, C.textDim.b, 255 * bestAlpha), TEXT_ALIGN_CENTER)
         
-        -- Best score
+        -- Best score - cyan-teal for contrast on red
         draw.SimpleText(bestScore, "AA_End_Value", cx, bestY + 25, 
-            Color(C.accentGold.r, C.accentGold.g, C.accentGold.b, 255 * bestAlpha), TEXT_ALIGN_CENTER)
+            Color(C.accentTeal.r, C.accentTeal.g, C.accentTeal.b, 255 * bestAlpha), TEXT_ALIGN_CENTER)
     end
     
     -- RESTART BUTTON - Clean and visible
@@ -284,29 +305,29 @@ function AA.EndScreen:DrawRestartButton(x, y, reveal)
     local hovered = mx >= x - btnW/2 and mx <= x + btnW/2 and my >= y and my <= y + btnH
     local alpha = math.min(reveal, 1)
     
-    -- Button background
+    -- Button background - OPAQUE
     if hovered then
-        surface.SetDrawColor(80, 80, 90, 240 * alpha)
+        surface.SetDrawColor(20, 40, 45, 255)  -- Cyan-tinted dark
     else
-        surface.SetDrawColor(C.bgPanelAlt.r, C.bgPanelAlt.g, C.bgPanelAlt.b, 240 * alpha)
+        surface.SetDrawColor(C.bgPanelAlt.r, C.bgPanelAlt.g, C.bgPanelAlt.b, 255)
     end
     surface.DrawRect(x - btnW/2, y, btnW, btnH)
     
-    -- Border
-    local borderColor = hovered and C.accentBlue or C.borderLight
-    surface.SetDrawColor(borderColor.r, borderColor.g, borderColor.b, 255 * alpha)
-    surface.DrawOutlinedRect(x - btnW/2, y, btnW, btnH, hovered and 3 or 2)
+    -- Border - CYAN for contrast on red background
+    local borderColor = hovered and C.accentCyan or C.borderLight
+    surface.SetDrawColor(borderColor.r, borderColor.g, borderColor.b, 255)
+    surface.DrawOutlinedRect(x - btnW/2, y, btnW, btnH, hovered and 4 or 2)
     
-    -- Inner glow on hover
+    -- Inner glow on hover - CYAN
     if hovered then
-        surface.SetDrawColor(100, 160, 255, 50 * alpha)
-        surface.DrawRect(x - btnW/2 + 3, y + 3, btnW - 6, btnH - 6)
+        surface.SetDrawColor(0, 255, 255, 60)
+        surface.DrawRect(x - btnW/2 + 4, y + 4, btnW - 8, btnH - 8)
     end
     
-    -- Button text
-    local textColor = hovered and C.textMain or C.textDim
+    -- Button text - CYAN-TINTED WHITE
+    local textColor = hovered and C.accentCyan or C.textMain
     draw.SimpleText("RESTART RUN", "AA_End_Button", x, y + btnH/2, 
-        Color(textColor.r, textColor.g, textColor.b, 255 * alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        Color(textColor.r, textColor.g, textColor.b, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     
     -- Click handling
     if hovered and input.IsMouseDown(MOUSE_LEFT) and self.AnimTime > 2.5 then
