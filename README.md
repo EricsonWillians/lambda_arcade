@@ -58,6 +58,13 @@ Lambda Arcade transforms any Garry's Mod map into a dark, stylish arcade combat 
 - Threat meter showing enemy pressure
 - Kill feed with floating score popups
 - Damage vignette for low health
+- Wave indicator and enemy counter
+
+#### Game Over Screen
+- High-contrast cyan/teal text over GMod's red death screen
+- Solid black backgrounds for readability
+- Multi-layer text shadows for depth
+- Cyan accents (opposite of red on color wheel)
 
 ### Workshop Integration
 
@@ -150,6 +157,22 @@ AA.Config.Game = {
 
 Adjust enemy stats, difficulty scaling, and elite modifiers.
 
+### Loot System (`lua/arcade_anomaly/core/sv_loot.lua`)
+
+- **Guaranteed drops**: Every enemy drops 1-4 items
+- **Health pickups**: 25-50 HP per drop
+- **Ammo drops**: Doubled/tripled amounts for all weapon types
+- **Smart drops**: Health prioritized when low, ammo matches equipped weapon
+- **Visual glows**: Enhanced particle effects for visibility
+- **Custom pickup handling**: Full amounts delivered on pickup
+
+### Weapon Accuracy (`lua/arcade_anomaly/core/sv_weapon_accuracy.lua`)
+
+- **85% spread reduction** for all hitscan weapons
+- **Weapon-specific tuning**: Pistols 92% more accurate, AR2 94%, Crossbow perfect
+- **Level scaling**: +2% accuracy per player level
+- **Auto-applied**: Weapons enhanced on pickup, spawn, and switch
+
 ## Technical Highlights
 
 ### Architecture
@@ -174,10 +197,36 @@ Adjust enemy stats, difficulty scaling, and elite modifiers.
 
 ### Testing
 
-Run the test suite:
+#### Interactive Launcher (`test_mod.py`)
+
+A Python 3 launcher for easy testing:
+
 ```bash
+# Interactive menu
 python test_mod.py
+
+# Quick launch (uses last map)
+python test_mod.py quick
+
+# Launch specific map
+python test_mod.py launch gm_construct
+
+# Dev mode
+python test_mod.py dev gm_construct
+
+# Install/remove addon
+python test_mod.py install
+python test_mod.py remove
+
+# Show status
+python test_mod.py status
 ```
+
+**Features:**
+- Remembers last used map
+- Pagination for large map lists
+- Automatic addon installation on launch
+- Map highlighting (construct, flatgrass marked with *)
 
 Or use the shell script:
 ```bash
